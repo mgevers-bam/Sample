@@ -1,0 +1,49 @@
+services:
+
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql-server
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=y
+      - SA_PASSWORD=Password123!!
+    volumes:
+      - ./sqlserver/data:/var/opt/mssql/data
+      - ./sqlserver/log:/var/opt/mssql/log
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:8.0.0-preview.6
+    container_name: aspire-dashboard
+    ports:
+      - 18888:18888
+      - 4317:18889
+    environment:
+       - CircuitOptions__DetailedErrors=true
+       - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true 
+
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - 5341:5341
+      - 8088:80
+
+  stargate.api:
+    image: ${DOCKER_REGISTRY-}stargateapi
+    container_name: stargate.api
+    build:
+      context: .
+      dockerfile: Stargate/src/Stargate.Api/Dockerfile
+    depends_on:
+        - sql-server
+    ports:
+      - "5001:5001"
+    environment:
+      ASPNETCORE_URLS: http://+:5001
+      OTEL_TRACES_SAMPLER: "always_on"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
+      OTEL_SERVICE_NAME: "stargate-api"

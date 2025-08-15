@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+		<PackageReference Include="System.ClientModel" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Stargate.Core\Stargate.Core.csproj" />
+	</ItemGroup>
+</Project>

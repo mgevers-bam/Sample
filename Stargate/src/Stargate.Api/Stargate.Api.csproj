@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>bc082f9f-8e14-4896-b429-774645325944</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Ardalis.Result.AspNetCore" />
+		<PackageReference Include="Ardalis.Result" />
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+		<PackageReference Include="OpenTelemetry.Exporter.Jaeger" />
+		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+		<PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+		<PackageReference Include="Serilog.AspNetCore" />
+		<PackageReference Include="Serilog.Enrichers.AssemblyName" />
+		<PackageReference Include="Serilog.Enrichers.Environment" />
+		<PackageReference Include="Serilog.Enrichers.ClientInfo" />
+		<PackageReference Include="Serilog.Expressions" />
+		<PackageReference Include="Serilog.Sinks.Console" />
+		<PackageReference Include="Serilog.Extensions.Hosting" />
+		<PackageReference Include="Serilog.Sinks.ApplicationInsights" />
+		<PackageReference Include="Serilog.Sinks.Datadog.Logs" />
+		<PackageReference Include="Serilog.Sinks.OpenTelemetry" />
+		<PackageReference Include="Serilog.Sinks.Seq" />
+		<PackageReference Include="Swashbuckle.AspNetCore" />
+		<PackageReference Include="System.ClientModel" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Stargate.Persistence\Stargate.Persistence.csproj" />
+	</ItemGroup>
+
+</Project>

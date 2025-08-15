@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Newtonsoft.Json" />
+	  <PackageReference Include="xunit" />
+	  <PackageReference Include="xunit.runner.visualstudio">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Stargate.Core.Boundary\Stargate.Core.Boundary.csproj" />
+    <ProjectReference Include="..\..\src\Stargate.Core.Domain\Stargate.Core.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
