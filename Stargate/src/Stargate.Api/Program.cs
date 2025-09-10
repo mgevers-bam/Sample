@@ -14,8 +14,12 @@ namespace Stargate.Api
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            var loggingOptions = builder.Configuration.GetSection(nameof(LoggingOptions))
+                .Get<LoggingOptions>();
+
             builder
-                .UseSerilog(logToConsole: true, logToOtel: true)
+                .UseMyVectorLogging(loggingOptions)
                 .ConfigureOpenTelemetry(serviceName: "stargate-api");
 
             ConfigureServices(builder.Services, builder.Configuration);
@@ -73,6 +77,7 @@ namespace Stargate.Api
             app.UseHttpsRedirection();
             app.UseAuthorization();
             app.MapControllers();
+            app.MapPrometheusScrapingEndpoint();
         }
 
         private static async Task EnsureDatabaseCreated(IDbContextFactory<StargateDbContext> dbContextFactory)

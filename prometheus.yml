@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'stargate-api'
+    static_configs:
+      - targets: ['stargate.api:5001']

@@ -9,37 +9,55 @@ public static class OpenTelemetryHostApplicationBuilderExtensions
 {
     public static IHostApplicationBuilder ConfigureOpenTelemetry(this IHostApplicationBuilder builder, string serviceName)
     {
-        builder.Logging.AddOpenTelemetry(config =>
-        {
-            config.IncludeScopes = true;
-            config.IncludeFormattedMessage = true;
-        });
+        var tracingOtlpEndpoint = builder.Configuration["OTLP_ENDPOINT_URL"];
+
+        var resourceBuilder = ResourceBuilder.CreateDefault()
+            .AddService(serviceName, serviceInstanceId: Environment.MachineName)
+            .AddTelemetrySdk()
+            .AddEnvironmentVariableDetector();
+
+        //builder.Logging.AddOpenTelemetry(config =>
+        //{
+        //    config.SetResourceBuilder(resourceBuilder);
+
+        //    config.IncludeScopes = true;
+        //    config.IncludeFormattedMessage = true;
+        //});
 
         builder.Services
             .AddOpenTelemetry()
             .WithMetrics(meterBuilder => {
-                meterBuilder.AddAspNetCoreInstrumentation();
-                meterBuilder.AddHttpClientInstrumentation();
+                meterBuilder
+                    .SetResourceBuilder(resourceBuilder)
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddPrometheusExporter();
             })
             .WithTracing(tracingBuilder =>
             {
-                var resourceBuilder = ResourceBuilder.CreateDefault()
-                    .AddService(serviceName)
-                    .AddTelemetrySdk()
-                    .AddEnvironmentVariableDetector();
-
                 tracingBuilder
                     .SetResourceBuilder(resourceBuilder)
                     .AddSource("MassTransit")
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddEntityFrameworkCoreInstrumentation();
+
+                if (tracingOtlpEndpoint != null)
+                {
+                    tracingBuilder.AddOtlpExporter(otlpOptions =>
+                    {
+                        otlpOptions.Endpoint = new Uri(tracingOtlpEndpoint);
+                    });
+                }
+                else
+                {
+                    tracingBuilder.AddConsoleExporter();
+                }
             });
 
         builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddOtlpExporter());
         builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddOtlpExporter());
         builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddOtlpExporter());
-
         builder.Services.AddMetrics();
 
         return builder;

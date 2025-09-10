@@ -13,11 +13,10 @@ services:
       - ./sqlserver/log:/var/opt/mssql/log
 
   aspire-dashboard:
-    image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:8.0.0-preview.6
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.4
     container_name: aspire-dashboard
     ports:
       - 18888:18888
-      - 4317:18889
     environment:
        - CircuitOptions__DetailedErrors=true
        - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true 
@@ -31,6 +30,74 @@ services:
     ports:
       - 5341:5341
       - 8088:80
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14250:14250"
+      - "14268:14268"
+      - "14269:14269"
+      - "9411:9411"
+      - "4317:4317"
+      - "4318:4318"
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  opensearch:
+    image: opensearchproject/opensearch:2.13.0
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=coRrecth0rseba++ery9.23.2007staple$
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.13.0
+    container_name: opensearch-dashboards
+    ports:
+      - "5601:5601"
+    environment:
+      - OPENSEARCH_HOSTS=http://opensearch:9200
+      - plugins.security.disabled=true
+    depends_on:
+      - opensearch
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
 
   stargate.api:
     image: ${DOCKER_REGISTRY-}stargateapi
@@ -48,3 +115,9 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
       OTEL_SERVICE_NAME: "stargate-api"
+      OTLP_ENDPOINT_URL: "http://jaeger:4317"
+      LoggingOptions__LoggingConnection: "http://opensearch:9200"
+
+volumes:
+  grafana-data:
+  opensearch-data:  
