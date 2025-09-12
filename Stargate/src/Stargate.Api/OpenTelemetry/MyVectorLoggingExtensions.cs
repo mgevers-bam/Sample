@@ -2,6 +2,7 @@
 using Serilog.Events;
 using Serilog.Sinks.MSSqlServer;
 using Serilog.Sinks.OpenSearch;
+using Serilog.Sinks.OpenTelemetry;
 using System.Data;
 using System.Reflection;
 
@@ -18,7 +19,7 @@ public static class MyVectorLoggingExtensions
 
         Log.Logger = loggerConfiguration.CreateLogger();
         AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
-        builder.Services.AddSerilog();;
+        builder.Services.AddSerilog();
 
         if (options.LogSink.HasFlag(SerilogSinks.OpenTelemetry))
         {
@@ -84,6 +85,8 @@ public static class MyVectorLoggingExtensions
         {
             loggerConfiguration.WriteTo.OpenTelemetry(options =>
             {
+                options.Endpoint = "http://otel-collector:4317";
+                options.Protocol = OtlpProtocol.Grpc;
                 options.ResourceAttributes = new Dictionary<string, object>
                 {
                     ["service.name"] = serviceName,

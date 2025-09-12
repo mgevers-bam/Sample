@@ -12,7 +12,7 @@ public class LoggingOptions
     public string LoggingConnection { get; set; }
 
     [Required]
-    public SerilogSinks LogSink { get; set; } = SerilogSinks.OpenSearch | SerilogSinks.OpenTelemetry;
+    public SerilogSinks LogSink { get; set; } = SerilogSinks.OpenTelemetry;
 
     [Required]
     public string FallbackLoggingDbConnection { get; set; } = string.Empty;

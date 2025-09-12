@@ -13,10 +13,13 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Directory.Packages.props", "."]
-COPY ["Stargate.Api/Stargate.Api.csproj", "Stargate.Api/"]
-RUN dotnet restore "./Stargate.Api/Stargate.Api.csproj"
+COPY ["Stargate/src/Stargate.Api/Stargate.Api.csproj", "Stargate/src/Stargate.Api/"]
+COPY ["Stargate/src/Stargate.Persistence/Stargate.Persistence.csproj", "Stargate/src/Stargate.Persistence/"]
+COPY ["Stargate/src/Stargate.Core/Stargate.Core.csproj", "Stargate/src/Stargate.Core/"]
+COPY ["Stargate/src/Stargate.Core.Domain/Stargate.Core.Domain.csproj", "Stargate/src/Stargate.Core.Domain/"]
+RUN dotnet restore "./Stargate/src/Stargate.Api/Stargate.Api.csproj"
 COPY . .
-WORKDIR "/src/Stargate.Api"
+WORKDIR "/src/Stargate/src/Stargate.Api"
 RUN dotnet build "./Stargate.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage

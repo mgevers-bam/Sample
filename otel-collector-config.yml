@@ -1,0 +1,42 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+   
+exporters:
+  otlp/aspire:
+    endpoint: "aspire-dashboard:18889"
+    tls:
+      insecure: true
+
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+  otlp:
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+
+  opensearch/logs:
+    http:
+      endpoint: "http://opensearch:9200"   
+      tls:
+        insecure_skip_verify: true
+      headers:
+        Authorization: "Basic YWRtaW46Y29ScmVjdGgwcnNlYmErK2VyeTkuMjMuMjAwN3N0YXBsZSQ="
+    logs_index: "otel-logs-stargate-api"
+    logs_index_fallback: "default-service"
+    logs_index_time_format: "yyyy.MM.dd"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp, otlp/aspire]
+    logs:
+      receivers: [otlp]
+      exporters: [otlp/aspire, opensearch/logs]
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus, otlp/aspire]

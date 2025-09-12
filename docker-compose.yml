@@ -12,24 +12,25 @@ services:
       - ./sqlserver/data:/var/opt/mssql/data
       - ./sqlserver/log:/var/opt/mssql/log
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.135.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+
   aspire-dashboard:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:9.4
     container_name: aspire-dashboard
     ports:
       - 18888:18888
+      - 18889:18889
     environment:
        - CircuitOptions__DetailedErrors=true
        - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true 
-
-  seq:
-    image: datalust/seq:latest
-    container_name: seq
-    environment:
-      - ACCEPT_EULA=Y
-      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
-    ports:
-      - 5341:5341
-      - 8088:80
 
   jaeger:
     image: jaegertracing/all-in-one:latest
@@ -46,8 +47,6 @@ services:
       - "14268:14268"
       - "14269:14269"
       - "9411:9411"
-      - "4317:4317"
-      - "4318:4318"
   
   prometheus:
     image: prom/prometheus:latest
@@ -84,6 +83,7 @@ services:
     environment:
       - OPENSEARCH_HOSTS=http://opensearch:9200
       - plugins.security.disabled=true
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
     depends_on:
       - opensearch
 
