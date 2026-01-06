@@ -33,9 +33,19 @@ public static class AuthenticationServiceCollectionExtensions
                     openIdEndpoint,
                     new OpenIdConnectConfigurationRetriever(),
                     new HttpDocumentRetriever(httpClient));
-                var config = configurationManager.GetConfigurationAsync().Result;
 
                 options.Authority = authOptions.Authority;
+                options.RequireHttpsMetadata = false; // for development with self-signed certs
+                options.MetadataAddress = openIdEndpoint;
+                options.ConfigurationManager = configurationManager;
+                
+                // Configure backchannel to use same SSL bypass for ongoing metadata refresh
+                options.BackchannelHttpHandler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                };
+                options.BackchannelTimeout = TimeSpan.FromSeconds(30);
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     RequireExpirationTime = true,
@@ -46,8 +56,7 @@ public static class AuthenticationServiceCollectionExtensions
                     ClockSkew = TimeSpan.FromMinutes(2),
                     ValidateAudience = false,
                     ValidTypes = new[] { "at+jwt" },
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKeys = config.SigningKeys
+                    ValidateIssuerSigningKey = true
                 };
             });
 
