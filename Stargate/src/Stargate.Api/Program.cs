@@ -6,20 +6,21 @@ using Stargate.Persistence.Sql;
 using Stargate.Persistence.Sql.Options;
 using Stargate.Api.OpenTelemetry;
 using Serilog;
+using Stargate.Api.Auth;
 
 namespace Stargate.Api
 {
-    public class Program
+    public static partial class Program
     {
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             var loggingOptions = builder.Configuration.GetSection(nameof(LoggingOptions))
-                .Get<LoggingOptions>();
+                .Get<LoggingOptions>() ?? throw new InvalidOperationException("LoggingOptions section is missing in configuration.");
 
             builder
-                .UseMyVectorLogging(loggingOptions)
+                .UseMyVectorLogging(loggingOptions!)
                 .ConfigureOpenTelemetry(serviceName: "stargate-api");
 
             ConfigureServices(builder.Services, builder.Configuration);
@@ -49,6 +50,11 @@ namespace Stargate.Api
                 cfg.RegisterServicesFromAssembly(typeof(CreatePersonCommand).Assembly);
             });
 
+            services.AddJwtAuthenticationServices(options =>
+            {
+                configuration.GetSection(nameof(AuthOptions)).Bind(options);
+            });
+
             services
                 .AddLogging()
                 .AddControllers()
@@ -59,7 +65,33 @@ namespace Stargate.Api
 
             services
                 .AddEndpointsApiExplorer()
-                .AddSwaggerGen();
+                .AddSwaggerGen(options =>
+                {
+                    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                    {
+                        Name = "Authorization",
+                        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                        Scheme = "Bearer",
+                        BearerFormat = "JWT",
+                        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                        Description = "Enter your JWT token in the format: {token}"
+                    });
+
+                    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                    {
+                        {
+                            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                            {
+                                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                                {
+                                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                }
+                            },
+                            Array.Empty<string>()
+                        }
+                    });
+                });
         }
 
         private static void ConfigureApplication(WebApplication app)
@@ -75,7 +107,11 @@ namespace Stargate.Api
             app.UseSerilogRequestLogging();
 
             app.UseHttpsRedirection();
-            app.UseAuthorization();
+
+            app
+                .UseAuthentication()
+                .UseAuthorization();
+
             app.MapControllers();
             app.MapPrometheusScrapingEndpoint();
         }

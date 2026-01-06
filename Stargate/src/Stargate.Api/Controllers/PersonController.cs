@@ -1,5 +1,6 @@
 ﻿using Ardalis.Result.AspNetCore;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Stargate.Api.Queries;
@@ -7,6 +8,7 @@ using Stargate.Core.Commands;
 
 namespace Stargate.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class PersonController : ControllerBase
