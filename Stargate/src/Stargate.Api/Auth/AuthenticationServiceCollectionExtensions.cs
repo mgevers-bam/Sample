@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 
 namespace Stargate.Api.Auth;
 
@@ -26,12 +27,16 @@ public static class AuthenticationServiceCollectionExtensions
                 // Create HTTP client that accepts self-signed certificates for development
                 var httpClient = new HttpClient(new HttpClientHandler
                 {
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
                 });
 
+                // Create a logging wrapper around the configuration manager
+                var baseRetriever = new OpenIdConnectConfigurationRetriever();
+                var loggingRetriever = new LoggingConfigurationRetriever(baseRetriever);
+                
                 var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
                     openIdEndpoint,
-                    new OpenIdConnectConfigurationRetriever(),
+                    loggingRetriever,
                     new HttpDocumentRetriever(httpClient));
 
                 options.Authority = authOptions.Authority;
@@ -56,10 +61,42 @@ public static class AuthenticationServiceCollectionExtensions
                     ClockSkew = TimeSpan.FromMinutes(2),
                     ValidateAudience = false,
                     ValidTypes = new[] { "at+jwt" },
-                    ValidateIssuerSigningKey = true
+                    ValidateIssuerSigningKey = true,
                 };
             });
 
         return services;
+    }
+
+    private class LoggingConfigurationRetriever : IConfigurationRetriever<OpenIdConnectConfiguration>
+    {
+        private readonly IConfigurationRetriever<OpenIdConnectConfiguration> _innerRetriever;
+
+        public LoggingConfigurationRetriever(IConfigurationRetriever<OpenIdConnectConfiguration> innerRetriever)
+        {
+            _innerRetriever = innerRetriever;
+        }
+
+        public async Task<OpenIdConnectConfiguration> GetConfigurationAsync(string address, IDocumentRetriever retriever, CancellationToken cancel)
+        {
+            Log.Information("Retrieving OpenID Connect configuration from: {Address}", address);
+            
+            var config = await _innerRetriever.GetConfigurationAsync(address, retriever, cancel);
+            
+            Log.Information("Successfully retrieved configuration. Signing keys count: {KeyCount}, Issuer: {Issuer}", 
+                config.SigningKeys?.Count ?? 0, config.Issuer);
+            
+            if (config.SigningKeys != null && config.SigningKeys.Any())
+            {
+                foreach (var key in config.SigningKeys)
+                {
+                    Log.Information("Signing key retrieved - KeyId: {KeyId}, Algorithm: {Algorithm}", 
+                        key.KeyId ?? "N/A", 
+                        (key as SecurityKey)?.GetType().Name ?? "Unknown");
+                }
+            }
+            
+            return config;
+        }
     }
 }
