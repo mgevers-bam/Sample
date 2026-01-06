@@ -18,14 +18,6 @@ public static class OpenTelemetryHostApplicationBuilderExtensions
             .AddTelemetrySdk()
             .AddEnvironmentVariableDetector();
 
-        //builder.Logging.AddOpenTelemetry(config =>
-        //{
-        //    config.SetResourceBuilder(resourceBuilder);
-
-        //    config.IncludeScopes = true;
-        //    config.IncludeFormattedMessage = true;
-        //});
-
         builder.Services
             .AddOpenTelemetry()
             .WithMetrics(meterBuilder => {

@@ -6,7 +6,6 @@
     <PackageVersion Include="Ardalis.Result" Version="10.1.0" />
     <PackageVersion Include="Ardalis.Result.AspNetCore" Version="10.1.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-    <PackageVersion Include="CSharpFunctionalExtensions" Version="3.4.3" />
     <PackageVersion Include="CSharpFunctionalExtensions" Version="3.6.0" />
     <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="8.17.1" />
     <PackageVersion Include="MassTransit" Version="8.3.6" />

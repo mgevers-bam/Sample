@@ -10,7 +10,7 @@ using Stargate.Api.Auth;
 
 namespace Stargate.Api
 {
-    public static partial class Program
+    public partial class Program
     {
         public static async Task Main(string[] args)
         {
