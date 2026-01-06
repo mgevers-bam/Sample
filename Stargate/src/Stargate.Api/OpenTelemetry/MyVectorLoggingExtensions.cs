@@ -15,7 +15,7 @@ public static class MyVectorLoggingExtensions
         var serviceName = builder.Configuration["OTEL:SERVICE:NAME"]
             ?? Assembly.GetEntryAssembly()!.GetName().Name!.Replace("MyVector.", string.Empty);
 
-        var loggerConfiguration = GetLoggerConfiguration(options, serviceName);
+        var loggerConfiguration = GetLoggerConfiguration(builder.Configuration, options, serviceName);
 
         Log.Logger = loggerConfiguration.CreateLogger();
         AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
@@ -32,22 +32,20 @@ public static class MyVectorLoggingExtensions
     }
 
     private static LoggerConfiguration GetLoggerConfiguration(
+        IConfiguration configuration,
         LoggingOptions options,
         string serviceName)
     {
-        var loggerConfiguration = new LoggerConfiguration();
+        var loggerConfiguration = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration);
 
         loggerConfiguration
             .MinimumLevel.Verbose()
-            .MinimumLevel.Override("MyVector", options.LogLevel)
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
-            .MinimumLevel.Override("Duende", LogEventLevel.Error)
-            .MinimumLevel.Override("BAMOAuth", options.LogLevel)
             .Enrich.FromLogContext()
             .Enrich.WithMachineName()
             .Enrich.WithProcessId()
             .Enrich.WithThreadId()
-            .Enrich.WithProperty("SourceName", Assembly.GetEntryAssembly().GetName().Name);
+            .Enrich.WithProperty("SourceName", Assembly.GetEntryAssembly()?.GetName().Name);
 
         if (options.LogSink.HasFlag(SerilogSinks.OpenSearch))
         {

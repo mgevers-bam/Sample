@@ -72,26 +72,7 @@ namespace Stargate.Api
             }
 
             app.UseMiddleware<RequestLogContext>();
-            app.UseSerilogRequestLogging(options =>
-            {
-                options.GetLevel = (httpContext, elapsed, ex) =>
-                {
-                    if (ex != null)
-                    {
-                        return Serilog.Events.LogEventLevel.Error;
-                    }
-
-                    if (httpContext.Request.Path.StartsWithSegments("/metrics") ||
-                        httpContext.Request.Path.StartsWithSegments("/health") ||
-                        httpContext.Request.Path.StartsWithSegments("/swagger") ||
-                        httpContext.Request.Path == "/")
-                    {
-                        return (Serilog.Events.LogEventLevel)(-1);
-                    }
-                    
-                    return Serilog.Events.LogEventLevel.Information;
-                };
-            });
+            app.UseSerilogRequestLogging();
 
             app.UseHttpsRedirection();
             app.UseAuthorization();
