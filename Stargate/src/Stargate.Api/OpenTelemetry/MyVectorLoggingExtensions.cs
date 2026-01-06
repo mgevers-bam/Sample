@@ -40,7 +40,6 @@ public static class MyVectorLoggingExtensions
             .ReadFrom.Configuration(configuration);
 
         loggerConfiguration
-            .MinimumLevel.Verbose()
             .Enrich.FromLogContext()
             .Enrich.WithMachineName()
             .Enrich.WithProcessId()
