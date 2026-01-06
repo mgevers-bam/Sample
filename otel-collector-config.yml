@@ -18,7 +18,7 @@ exporters:
     tls:
       insecure: true
 
-  opensearch/logs:
+  opensearch:
     http:
       endpoint: "http://opensearch:9200"   
       tls:
@@ -36,7 +36,7 @@ service:
       exporters: [otlp, otlp/aspire]
     logs:
       receivers: [otlp]
-      exporters: [otlp/aspire, opensearch/logs]
+      exporters: [otlp/aspire, opensearch]
     metrics:
       receivers: [otlp]
       exporters: [prometheus, otlp/aspire]

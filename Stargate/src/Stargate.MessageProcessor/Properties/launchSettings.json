@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Stargate.MessageProcessor": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
