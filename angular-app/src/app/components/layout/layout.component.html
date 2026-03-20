@@ -1,0 +1,25 @@
+<mat-toolbar class="mat-elevation-z3">
+  <button mat-icon-button (click)="isCollapsed.set(!isCollapsed())">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <div class="center-flex">
+    <h1>Sample App</h1>
+  </div>
+  <div class="floating-right">
+    <mat-icon>light_mode</mat-icon>
+    <mat-slide-toggle
+      [checked]="isDarkMode()"
+      (change)="toggleTheme($event.checked)"
+    >
+    </mat-slide-toggle>
+    <mat-icon>dark_mode</mat-icon>
+  </div>
+</mat-toolbar>
+<mat-sidenav-container>
+  <mat-sidenav opened mode="side" [style.width]="sidenavWidth()">
+    <app-sidenav />
+  </mat-sidenav>
+  <mat-sidenav-content class="content" [style.margin-left]="sidenavWidth()">
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>

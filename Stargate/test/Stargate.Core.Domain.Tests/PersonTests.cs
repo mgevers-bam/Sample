@@ -1,5 +1,5 @@
-﻿using Stargate.Testing;
-using Stargate.Testing.Assert;
+using Common.Testing.Assert;
+using Stargate.Testing;
 
 namespace Stargate.Core.Domain.Tests;
 

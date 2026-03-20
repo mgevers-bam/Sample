@@ -1,11 +1,13 @@
-﻿using Ardalis.Result;
-using Microsoft.Extensions.Logging;
-using Moq;
+using Ardalis.Result;
+using Common.LanguageExtensions.Utilities.ResultExtensions;
+using Common.Testing.FluentTesting;
+using Common.Testing.FluentTesting.Asserts;
+using Common.Testing.Persistence;
 using Stargate.Core.Commands;
 using Stargate.Core.Contracts;
 using Stargate.Core.Domain;
+using Stargate.Core.Tests.Fakes;
 using Stargate.Testing;
-using Stargate.Testing.Logging;
 
 namespace Stargate.Core.Tests.Commands;
 
@@ -16,9 +18,7 @@ public class CreateAstronautDutyTests
     {
         var person = DataModels.CreatePerson();
         var duty = DataModels.CreateAstronautDuty(person);
-        var logger = GetLogger();
-        var repository = GetRepository(person, Result.Success());
-        var handler = new CreateAstronautDutyCommandHandler(logger.Object, repository.Object);
+        var astronaut = DataModels.CreateAstronaut([duty], person.Name);
 
         var command = new CreateAstronautDutyCommand
         {
@@ -27,44 +27,39 @@ public class CreateAstronautDutyTests
             DutyTitle = duty.DutyTitle,
             DutyStartDate = duty.DutyStartDate
         };
-        var result = await handler.Handle(command, CancellationToken.None);
 
-        repository.Verify(x => x.Update(It.IsAny<Person>()), Times.Once);
-        repository.Verify(x => x.CommitTransaction(It.IsAny<CancellationToken>()), Times.Once);
-        logger.AssertLogs(new LogEntry(LogLevel.Information, $"Created astronaut duty {duty}"));
-
-        Assert.True(result.IsSuccess);
+        await Arrange(new DatabaseState(person))
+            .Handle(command)
+            .AssertDatabase(new DatabaseState(astronaut))
+            .AssertOutput(Result.Success(0));
     }
 
     [Fact]
     public async Task AddAstronautDuty_WhenPersonNotFound_ReturnsFailure()
     {
-        var name = "James Bond";
-        var logger = GetLogger();
-        var repository = GetRepository(person: null, Result.Success());
-        var handler = new CreateAstronautDutyCommandHandler(logger.Object, repository.Object);
+        var person = DataModels.CreatePerson();
+        var duty = DataModels.CreateAstronautDuty(person);
 
         var command = new CreateAstronautDutyCommand
         {
-            Name = name,
-            DutyTitle = "Commander",
-            Rank = "Colonel",
-            DutyStartDate = DateTime.UtcNow,
+            Name = person.Name,
+            Rank = duty.Rank,
+            DutyTitle = duty.DutyTitle,
+            DutyStartDate = duty.DutyStartDate
         };
-        var result = await handler.Handle(command, CancellationToken.None);
 
-        logger.AssertLogs(new LogEntry(LogLevel.Error, $"Failed to retreive person with name {name}: Person with that name not found"));
-        Assert.False(result.IsSuccess);
+        await Arrange(DatabaseState.Empty)
+            .Handle(command)
+            .AssertDatabase(DatabaseState.Empty)
+            .AssertOutput(Result.NotFound().AsTypedError<int>());
     }
 
     [Fact]
     public async Task AddAstronautDuty_WhenPersonAlreadyRetired_ReturnsFailure()
     {
-        var person = DataModels.CreateAstronaut([ new AstronautDutyInfo { DutyTitle = AstronautDuty.Retired } ]);
-        var duty = DataModels.CreateAstronautDuty(person);
-        var logger = GetLogger();
-        var repository = GetRepository(person, Result.Success());
-        var handler = new CreateAstronautDutyCommandHandler(logger.Object, repository.Object);
+        var person = DataModels.CreatePerson();
+        var duty = DataModels.CreateAstronautDuty(person, dutyTitle: AstronautDuty.Retired);
+        var astronaut = DataModels.CreateAstronaut([duty], person.Name);
 
         var command = new CreateAstronautDutyCommand
         {
@@ -73,20 +68,19 @@ public class CreateAstronautDutyTests
             DutyTitle = duty.DutyTitle,
             DutyStartDate = duty.DutyStartDate
         };
-        var result = await handler.Handle(command, CancellationToken.None);
 
-        logger.AssertLogs(new LogEntry(LogLevel.Error, $"Failed to add astronaught duty for person {person.Name}: Cannot add a new duty after retirement."));
-        Assert.False(result.IsSuccess);
+        await Arrange(new DatabaseState(astronaut))
+            .Handle(command)
+            .AssertDatabase(new DatabaseState(astronaut))
+            .AssertOutput(Result.Error("Cannot add a new duty after retirement.").AsTypedError<int>());
     }
 
     [Fact]
     public async Task AddAstronautDuty_WhenSaveFails_ReturnsFailure()
     {
+        var dbError = Result.Conflict("A Person with the name already exists");
         var person = DataModels.CreatePerson();
         var duty = DataModels.CreateAstronautDuty(person);
-        var logger = GetLogger();
-        var repository = GetRepository(person, Result.CriticalError("could not update database"));
-        var handler = new CreateAstronautDutyCommandHandler(logger.Object, repository.Object);
 
         var command = new CreateAstronautDutyCommand
         {
@@ -95,37 +89,23 @@ public class CreateAstronautDutyTests
             DutyTitle = duty.DutyTitle,
             DutyStartDate = duty.DutyStartDate
         };
-        var result = await handler.Handle(command, CancellationToken.None);
 
-        repository.Verify(x => x.Update(It.IsAny<Person>()), Times.Once);
-        repository.Verify(x => x.CommitTransaction(It.IsAny<CancellationToken>()), Times.Once);
-        logger.AssertLogs(new LogEntry(LogLevel.Error, $"Failed to commit transaction for creating person {person.Name}: could not update database"));
-
-        Assert.False(result.IsSuccess);
+        await Arrange(new DatabaseState(person), databaseError: dbError)
+            .Handle(command)
+            .AssertDatabase(new DatabaseState(person))
+            .AssertOutput(dbError.AsTypedError<int>());
     }
 
-    private static Mock<ILogger<CreateAstronautDutyCommandHandler>> GetLogger()
+    private static HandlerTestSetup<CreateAstronautDutyCommandHandler, int> Arrange(
+        DatabaseState databaseState,
+        Result? databaseError = null)
     {
-        return new Mock<ILogger<CreateAstronautDutyCommandHandler>>();
-    }
-
-    private static Mock<IPersonRepository> GetRepository(
-        Person? person,
-        Result saveResult)
-    {
-        var mock = new Mock<IPersonRepository>();
-        var personResult = person == null
-            ? Result<Person>.NotFound($"Person with that name not found")
-            : Result.Success(person);
-
-        mock
-            .Setup(x => x.GetPersonByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(personResult);
-
-        mock
-            .Setup(x => x.CommitTransaction(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(saveResult);
-
-        return mock;
+        return new HandlerTestSetup<CreateAstronautDutyCommandHandler, int>(
+            databaseState ?? DatabaseState.Empty,
+            databaseError,
+            configureMocker: mocker =>
+            {
+                mocker.Use<IPersonRepository>(new FakePersonRepository());
+            });
     }
 }

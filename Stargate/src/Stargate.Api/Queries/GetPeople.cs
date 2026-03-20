@@ -1,9 +1,8 @@
-﻿using Ardalis.Result;
+using Ardalis.Result;
+using Common.LanguageExtensions.Utilities.ResultExtensions;
 using MediatR;
 using Stargate.Api.Dtos;
-using Stargate.Core;
 using Stargate.Core.Contracts;
-using Stargate.Core.Domain;
 
 namespace Stargate.Api.Queries;
 
@@ -21,11 +20,13 @@ public class GetPeopleQueryHandler : IRequestHandler<GetPeopleQuery, Result<IRea
     public Task<Result<IReadOnlyList<PersonAstronaut>>> Handle(GetPeopleQuery request, CancellationToken cancellationToken)
     {
         return repository.GetAllAsync(cancellationToken)
-            .Map<IReadOnlyList<Person>, IReadOnlyList<PersonAstronaut>>(people =>
+            .Map(people =>
             {
-                return people
+                IReadOnlyList<PersonAstronaut> astronauts = people
                     .Select(person => new PersonAstronaut(person))
                     .ToList();
+
+                return astronauts;
             });
     }
 }

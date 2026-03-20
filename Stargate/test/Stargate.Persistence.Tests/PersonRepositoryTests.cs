@@ -1,6 +1,8 @@
-﻿using Ardalis.Result;
+using Ardalis.Result;
+using Common.LanguageExtensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Stargate.Core.Contracts;
 using Stargate.Persistence.Repositories;
 using Stargate.Persistence.Sql;
 using Stargate.Testing;
@@ -27,7 +29,7 @@ public class PersonRepositoryTests
         // create person
         using (var dbContext = await dbContextFactory.CreateDbContextAsync())
         {
-            var repo = new PersonRepository(dbContext);
+            IPersonRepository repo = new PersonRepository(dbContext);           
 
             repo.Add(DataModels.CreatePerson(personName));
             var saveResult = await repo.CommitTransaction();
@@ -37,7 +39,7 @@ public class PersonRepositoryTests
         // add astronaut duty to person
         using (var dbContext = await dbContextFactory.CreateDbContextAsync())
         {
-            var repo = new PersonRepository(dbContext);
+            IPersonRepository repo = new PersonRepository(dbContext);
 
             var personResult = await repo.GetPersonByNameAsync(personName);
             Assert.True(personResult.IsSuccess, string.Join(",", personResult.Errors));
@@ -52,7 +54,7 @@ public class PersonRepositoryTests
         // remove person
         using (var dbContext = await dbContextFactory.CreateDbContextAsync())
         {
-            var repo = new PersonRepository(dbContext);
+            IPersonRepository repo = new PersonRepository(dbContext);
 
             var personResult = await repo.GetPersonByNameAsync(personName);
             Assert.True(personResult.IsSuccess, string.Join(",", personResult.Errors));

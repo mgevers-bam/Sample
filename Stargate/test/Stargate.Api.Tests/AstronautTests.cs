@@ -1,7 +1,7 @@
-﻿using Stargate.Api.Queries;
+using Common.Testing.Web.Auth;
 using Stargate.Core.Commands;
 using Stargate.Testing;
-using Stargate.Testing.Assert;
+using System.Security.Claims;
 
 namespace Stargate.Api.Tests;
 
@@ -17,6 +17,9 @@ public class AstronautTests : IClassFixture<StargateApiApplicationFactory>
     [Fact]
     public async Task AstronautCrudTest()
     {
+        var token = FakeJwtTokens.GenerateJwtToken(new Claim("PersonIdentifier", Guid.NewGuid().ToString()));
+        //await _factory.InitializeDatabaseAsync();
+        
         var client = _factory.CreateClient();
 
         var person = DataModels.CreatePerson();

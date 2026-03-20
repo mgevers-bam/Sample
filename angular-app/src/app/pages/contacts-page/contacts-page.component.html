@@ -1,0 +1,26 @@
+<div>
+  <div bp-layout="grid gap:sm cols:12">
+    <div bp-layout="col:6@xs">
+      <app-search-bar
+        [filteredOptions]="(filteredNames$ | async) ?? []"
+        (searchText)="onSearchTextChanged($event)"
+      />
+    </div>
+    <div bp-layout="col:6@xs">
+      <app-age-filter (filterRange)="onAgeFilterChanged($event)" />
+    </div>
+  </div>
+  <mat-divider></mat-divider>
+  <br />
+  <div bp-layout="grid gap:sm cols:12">
+    @for ((wrapper of filteredContacts$ | async); track wrapper.contact.id) {
+
+    <div
+      bp-layout="col:12@xs col:6@lg"
+      [ngClass]="{ hidden: !wrapper.isVisible }"
+    >
+      <app-contact-card [contact]="wrapper.contact" />
+    </div>
+    }
+  </div>
+</div>

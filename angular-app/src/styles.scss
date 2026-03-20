@@ -1,0 +1,45 @@
+@import "@blueprintui/layout/index.min.css";
+//@import "@angular/material/prebuilt-themes/azure-blue.css";
+@import "@angular/material/prebuilt-themes/indigo-pink.css";
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.mat-elevation-z0 {
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+.mat-elevation-z1 {
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+.mat-elevation-z2 {
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+}
+.mat-elevation-z3 {
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4);
+}
+.mat-elevation-z4 {
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.5);
+}
+.mat-elevation-z5 {
+  box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.6);
+}
+
+.mirror {
+  display: inline-block;
+  font-size: 30px;
+
+  -webkit-transform: matrix(-1, 0, 0, 1, 0, 0);
+  -moz-transform: matrix(-1, 0, 0, 1, 0, 0);
+  -o-transform: matrix(-1, 0, 0, 1, 0, 0);
+  transform: matrix(-1, 0, 0, 1, 0, 0);
+}
+
+.hidden {
+  display: none;
+}

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Common.LanguageExtensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Stargate.Persistence.Repositories;
@@ -37,10 +38,7 @@ public static class PersistenceServiceCollectionExtensions
     {
         services.AddStargateDbContext(config);
 
-        services
-            .AddScopedAsAllImplementedInterfaces<PersonRepository>();
-            //.AddScoped<IRepository<AstronautDuty>, EFRepository<AstronautDuty>>()
-            //.AddScoped<IRepository<AstronautDetail>, EFRepository<AstronautDetail>>();
+        services.AddScopedAsAllImplementedInterfaces<PersonRepository>();
 
         return services;
     }

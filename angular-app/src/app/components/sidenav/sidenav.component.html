@@ -1,0 +1,15 @@
+<mat-nav-list>
+  <a
+    mat-list-item
+    class="navbar-item"
+    *ngFor="let item of navbarItems()"
+    [routerLink]="item.route"
+    routerLinkActive="selected-navbar-item"
+    [routerLinkActiveOptions]="{ exact: true }"
+    #rla="routerLinkActive"
+    [activated]="rla.isActive"
+  >
+    <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+    <span matListItemTitle>{{ item.label }}</span>
+  </a>
+</mat-nav-list>

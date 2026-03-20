@@ -1,0 +1,4 @@
+<mat-slider [min]="minAge" [max]="maxAge" steps="1">
+  <input [(value)]="filteredMin" matSliderStartThumb  (input)="onMinChanged($event)"/>
+  <input [(value)]="filteredMax" matSliderEndThumb  (input)="onMaxChanged($event)" />
+</mat-slider>

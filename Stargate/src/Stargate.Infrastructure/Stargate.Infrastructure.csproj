@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFramework>net10.0</TargetFramework>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\Common.Infrastructure\Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\Common.LanguageExtensions\Common.LanguageExtensions.csproj" />
+    <ProjectReference Include="..\Stargate.Core\Stargate.Core.csproj" />
+  </ItemGroup>
+
+</Project>

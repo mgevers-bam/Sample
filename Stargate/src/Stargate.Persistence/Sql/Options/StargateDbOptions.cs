@@ -1,4 +1,4 @@
-﻿namespace Stargate.Persistence.Sql.Options;
+namespace Stargate.Persistence.Sql.Options;
 
 public class StargateDbOptions
 {

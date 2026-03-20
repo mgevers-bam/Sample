@@ -1,7 +1,7 @@
-﻿using Ardalis.Result;
+using Ardalis.Result;
+using Common.LanguageExtensions.Utilities.ResultExtensions;
 using MediatR;
 using Stargate.Api.Dtos;
-using Stargate.Core;
 using Stargate.Core.Contracts;
 using Stargate.Core.Domain;
 
@@ -37,7 +37,7 @@ public class GetAstronautDutiesByPersonNameQueryHandler : IRequestHandler<GetAst
     public Task<Result<PersonWithDuties>> Handle(GetAstronautDutiesByPersonNameQuery request, CancellationToken cancellationToken)
     {
         return repository.GetPersonByNameAsync(request.Name, cancellationToken)
-            .Map<Person, PersonWithDuties>(person =>
+            .Map(person =>
             {
                 var personDto = new PersonAstronaut(person);
                 return new PersonWithDuties(personDto, person.AstronautDuties);

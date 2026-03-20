@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Stargate.Core.Domain;
 
 namespace Stargate.Persistence.Sql;

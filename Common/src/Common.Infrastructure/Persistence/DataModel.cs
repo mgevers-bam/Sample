@@ -1,0 +1,15 @@
+﻿using Common.LanguageExtensions.Contracts;
+using CSharpFunctionalExtensions;
+
+namespace Common.Infrastructure.Persistence;
+
+public class DataModel : Entity<Guid>, IDataModel
+{
+    public DataModel(Guid id)
+        : base(id) { }
+
+    public DataModel()
+        : base() { }
+
+    public object GetId() => Id;
+}

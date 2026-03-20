@@ -1,10 +1,11 @@
-﻿using Ardalis.Result;
+using Ardalis.Result;
+using Common.LanguageExtensions.Contracts;
 using Newtonsoft.Json;
 using C = CSharpFunctionalExtensions;
 
 namespace Stargate.Core.Domain;
 
-public class Person : C.Entity<int>, IDataModel
+public class Person : C.Entity<int>, IDataModel<int>
 {
     private Person() { }
 
@@ -12,6 +13,8 @@ public class Person : C.Entity<int>, IDataModel
     {
         Name = name;
     }
+
+    public object GetId() => Id;
 
     public string Name { get; private set; } = string.Empty;
 

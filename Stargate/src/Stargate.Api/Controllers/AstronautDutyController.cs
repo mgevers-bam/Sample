@@ -1,4 +1,4 @@
-﻿using Ardalis.Result.AspNetCore;
+using Ardalis.Result.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -9,15 +9,8 @@ namespace Stargate.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AstronautDutyController : ControllerBase
+public class AstronautDutyController(IMediator mediator) : ControllerBase
 {
-    private readonly IMediator mediator;
-
-    public AstronautDutyController(IMediator mediator)
-    {
-        this.mediator = mediator;
-    }
-
     [HttpGet("{name}")]
     public async Task<IActionResult> GetAstronautDutiesByName(string name, CancellationToken cancellationToken)
     {

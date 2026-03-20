@@ -1,4 +1,5 @@
-﻿using Ardalis.Result;
+using Ardalis.Result;
+using Common.Infrastructure.Persistence.EntityFramework;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Stargate.Core.Contracts;
@@ -7,7 +8,7 @@ using Stargate.Persistence.Sql;
 
 namespace Stargate.Persistence.Repositories;
 
-public class PersonRepository : EFRepository<Person>, IPersonRepository
+public class PersonRepository : EFUnitOfWorkRepository<StargateDbContext>, IPersonRepository
 {
     public PersonRepository(StargateDbContext context)
         : base(context)

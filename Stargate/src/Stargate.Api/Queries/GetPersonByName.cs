@@ -1,9 +1,8 @@
-﻿using Ardalis.Result;
+using Ardalis.Result;
+using Common.LanguageExtensions.Utilities.ResultExtensions;
 using MediatR;
 using Stargate.Api.Dtos;
-using Stargate.Core;
 using Stargate.Core.Contracts;
-using Stargate.Core.Domain;
 
 namespace Stargate.Api.Queries;
 
@@ -24,6 +23,6 @@ public class GetPersonByNameQueryHandler : IRequestHandler<GetPersonByNameQuery,
     public Task<Result<PersonAstronaut>> Handle(GetPersonByNameQuery request, CancellationToken cancellationToken)
     {
         return repository.GetPersonByNameAsync(request.Name, cancellationToken)
-            .Map<Person, PersonAstronaut>(person => new PersonAstronaut(person));
+            .Map(person => new PersonAstronaut(person));
     }
 }

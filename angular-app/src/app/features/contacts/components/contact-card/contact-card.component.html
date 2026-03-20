@@ -1,0 +1,19 @@
+<div *ngIf="contact(); else noContent">
+  <mat-card>
+    <mat-card-header>
+
+      <mat-card-title><i class="material-icons">person</i> {{ contact()!.name }} ({{contact()!.id}})</mat-card-title>
+      <mat-card-subtitle>{{ contact()!.email }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-divider></mat-divider>
+    <mat-card-content>
+      <p>Age: {{ contact()!.age }}</p>
+      <p>Gender: {{ contact()!.gender }}</p>
+      <p>Company: {{ contact()!.company }}</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<ng-template #noContent>
+  <p>contact not loaded</p>
+</ng-template>

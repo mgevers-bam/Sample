@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -9,10 +9,13 @@
 	<ItemGroup>
 		<PackageReference Include="Ardalis.Result" />
 		<PackageReference Include="MediatR" />
+		<PackageReference Include="MassTransit" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\..\Common\src\Common.LanguageExtensions\Common.LanguageExtensions.csproj" />
+	  <ProjectReference Include="..\Stargate.Core.Boundary\Stargate.Core.Boundary.csproj" />
 	  <ProjectReference Include="..\Stargate.Core.Domain\Stargate.Core.Domain.csproj" />
 	</ItemGroup>
 

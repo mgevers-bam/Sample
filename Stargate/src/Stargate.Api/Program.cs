@@ -1,128 +1,128 @@
+using Common.Infrastructure.Auth;
+using Common.Infrastructure.OpenTelemetry;
+using Common.Infrastructure.ServiceBus.MassTransit;
+using MassTransit;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Serilog;
+using Stargate.Api.EventHandlers;
+using Stargate.Api.Hubs;
+using Stargate.Api.OpenTelemetry;
 using Stargate.Api.Queries;
 using Stargate.Core.Commands;
+using Stargate.Infrastructure.ServerSentEvents;
 using Stargate.Persistence.Sql;
 using Stargate.Persistence.Sql.Options;
-using Stargate.Api.OpenTelemetry;
-using Serilog;
-using Stargate.Api.Auth;
 
-namespace Stargate.Api
+namespace Stargate.Api;
+
+public partial class Program
 {
-    public partial class Program
+    public static async Task Main(string[] args)
     {
-        public static async Task Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+        builder.UseSerilog("stargate-api", logToConsole: true, logToOtel: true);
+
+        if (!builder.Environment.IsEnvironment("Testing"))
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            var loggingOptions = builder.Configuration.GetSection(nameof(LoggingOptions))
-                .Get<LoggingOptions>() ?? throw new InvalidOperationException("LoggingOptions section is missing in configuration.");
-
-            builder
-                .UseMyVectorLogging(loggingOptions!)
-                .ConfigureOpenTelemetry(serviceName: "stargate-api");
-
-            ConfigureServices(builder.Services, builder.Configuration);
-
-            var app = builder.Build();
-            ConfigureApplication(app);
-
-            using (var scope = app.Services.CreateScope())
-            {
-                var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<StargateDbContext>>();
-                await EnsureDatabaseCreated(dbContextFactory);
-            }
-
-            await app.RunAsync();
+            builder.SetupMassTransit(
+                rabbitConfig: options => builder.Configuration.GetSection(nameof(RabbitMqTransportOptions)).Bind(options),
+                configureBus: config =>
+                {
+                    config.AddRequestClient<CreatePersonCommand>();
+                
+                    config.AddConsumers(typeof(Program).Assembly);
+                    config.AddConsumer<SendEventsToClientHandler>()
+                        .Endpoint(e =>
+                        {
+                            e.Temporary = true;
+                            e.InstanceId = Environment.MachineName;
+                        });
+                });
         }
 
-        private static void ConfigureServices(IServiceCollection services, ConfigurationManager configuration)
+        ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
+
+        var app = builder.Build();
+        ConfigureApplication(app);
+
+        await app.RunAsync();
+    }
+
+    private static void ConfigureServices(IServiceCollection services, ConfigurationManager configuration, IHostEnvironment environment)
+    {
+        if (!environment.IsEnvironment("Testing"))
         {
             services.AddStargateRepositories(options =>
             {
                 configuration.GetSection(nameof(StargateDbOptions)).Bind(options);
             });
+        }
 
-            services.AddMediatR(cfg =>
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(GetPeopleQuery).Assembly);
+            cfg.RegisterServicesFromAssembly(typeof(CreatePersonCommand).Assembly);
+        });
+
+        services
+            .AddLogging()
+            .AddControllers()
+            .AddNewtonsoftJson(options =>
             {
-                cfg.RegisterServicesFromAssembly(typeof(GetPeopleQuery).Assembly);
-                cfg.RegisterServicesFromAssembly(typeof(CreatePersonCommand).Assembly);
+                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
-            services.AddJwtAuthenticationServices(options =>
+        services
+            .AddEndpointsApiExplorer()
+            .AddOpenApi();
+
+        services.AddEventPublisher();
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy("DevelopmentCors", policy =>
             {
-                configuration.GetSection(nameof(AuthOptions)).Bind(options);
+                policy
+                    .WithOrigins("http://localhost:4200")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
             });
+        });
 
-            services
-                .AddLogging()
-                .AddControllers()
-                .AddNewtonsoftJson(options =>
-                {
-                    options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-                });
+        services.AddSignalR();
+        services.AddJwtAuthentication("fake-domain", "fake-audience");
+    }
 
-            services
-                .AddEndpointsApiExplorer()
-                .AddSwaggerGen(options =>
-                {
-                    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-                    {
-                        Name = "Authorization",
-                        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-                        Scheme = "Bearer",
-                        BearerFormat = "JWT",
-                        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-                        Description = "Enter your JWT token in the format: {token}"
-                    });
-
-                    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-                    {
-                        {
-                            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-                            {
-                                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                                {
-                                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                                    Id = "Bearer"
-                                }
-                            },
-                            Array.Empty<string>()
-                        }
-                    });
-                });
-        }
-
-        private static void ConfigureApplication(WebApplication app)
+    private static void ConfigureApplication(WebApplication app)
+    {
+        if (app.Environment.IsDevelopment())
         {
-            if (app.Environment.IsDevelopment())
+            app.UseCors("DevelopmentCors");
+            app.MapOpenApi();
+
+            app.UseSwaggerUI(options =>
             {
-                app
-                    .UseSwagger()
-                    .UseSwaggerUI();
-            }
-
-            app.UseMiddleware<RequestLogContext>();
-            app.UseSerilogRequestLogging();
-
-            app.UseHttpsRedirection();
-
-            app
-                .UseAuthentication()
-                .UseAuthorization();
-
-            app.MapControllers();
-            app.MapPrometheusScrapingEndpoint();
+                options.SwaggerEndpoint("/openapi/v1.json", "Stargate API V1");
+            });
         }
 
-        private static async Task EnsureDatabaseCreated(IDbContextFactory<StargateDbContext> dbContextFactory)
+        app.UseMiddleware<RequestLogContext>();
+        app.UseSerilogRequestLogging();
+        app.UseHttpsRedirection();
+
+        app
+            .UseAuthentication()
+            .UseAuthorization();
+
+        app.MapControllers();
+
+        app.UseServerSentEvents("api/ServerSentEvents/stream");
+        app.MapHub<ServerEventHub>("api/server-events-hub", options =>
         {
-            using var dbContext = await dbContextFactory.CreateDbContextAsync();
-
-            await dbContext.Database.EnsureDeletedAsync();
-            await dbContext.Database.EnsureCreatedAsync();
-            await dbContext.Database.MigrateAsync();
-        }
+            options.Transports = HttpTransportType.WebSockets;
+        });
     }
 }

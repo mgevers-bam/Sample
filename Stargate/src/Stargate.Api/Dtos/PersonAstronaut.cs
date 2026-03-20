@@ -1,4 +1,4 @@
-﻿using Stargate.Core.Domain;
+using Stargate.Core.Domain;
 
 namespace Stargate.Api.Dtos;
 

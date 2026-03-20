@@ -1,4 +1,4 @@
-﻿using Stargate.Core.Domain;
+using Stargate.Core.Domain;
 
 namespace Stargate.Testing;
 
@@ -14,6 +14,21 @@ public static class DataModels
     public static Person CreatePerson(string? name = null)
     {
         return new Person(name ?? "James Bond");
+    }
+
+    public static Person CreateAstronaut(
+        AstronautDuty[] duties,
+        string? name = null)
+    {
+        var person = CreatePerson();
+
+        foreach (var dutyInfo in duties)
+        {
+            var duty = CreateAstronautDuty(person, dutyInfo.Rank, dutyInfo.DutyTitle, dutyInfo.DutyStartDate);
+            person.AddAstronautDuty(duty.Rank, duty.DutyTitle, duty.DutyStartDate);
+        }
+
+        return person;
     }
 
     public static Person CreateAstronaut(

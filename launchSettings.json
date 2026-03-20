@@ -4,8 +4,8 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {
-        "stargate.messageprocessor": "StartDebugging",
-        "stargate.api": "StartDebugging"
+        "stargate.api": "StartDebugging",
+        "stargate.messageprocessor": "StartDebugging"
       }
     }
   }

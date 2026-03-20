@@ -1,9 +1,10 @@
-﻿using Ardalis.Result;
+using Ardalis.Result;
+using Common.LanguageExtensions.Contracts;
 using Stargate.Core.Domain;
 
 namespace Stargate.Core.Contracts;
 
-public interface IPersonRepository : IRepository<Person>
+public interface IPersonRepository : IUnitOfWorkRepository
 {
     Task<Result<IReadOnlyList<Person>>> GetAllAsync(CancellationToken cancellationToken = default);
 

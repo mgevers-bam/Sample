@@ -1,17 +1,24 @@
 # See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
 
 
 # This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Directory.Packages.props", "."]
 COPY ["Stargate/src/Stargate.MessageProcessor/Stargate.MessageProcessor.csproj", "Stargate/src/Stargate.MessageProcessor/"]
+COPY ["Common/src/Common.Infrastructure/Common.Infrastructure.csproj", "Common/src/Common.Infrastructure/"]
+COPY ["Common/src/Common.LanguageExtensions/Common.LanguageExtensions.csproj", "Common/src/Common.LanguageExtensions/"]
+COPY ["Stargate/src/Stargate.Infrastructure/Stargate.Infrastructure.csproj", "Stargate/src/Stargate.Infrastructure/"]
+COPY ["Stargate/src/Stargate.Core/Stargate.Core.csproj", "Stargate/src/Stargate.Core/"]
+COPY ["Stargate/src/Stargate.Core.Boundary/Stargate.Core.Boundary.csproj", "Stargate/src/Stargate.Core.Boundary/"]
+COPY ["Stargate/src/Stargate.Core.Domain/Stargate.Core.Domain.csproj", "Stargate/src/Stargate.Core.Domain/"]
+COPY ["Stargate/src/Stargate.Persistence/Stargate.Persistence.csproj", "Stargate/src/Stargate.Persistence/"]
 RUN dotnet restore "./Stargate/src/Stargate.MessageProcessor/Stargate.MessageProcessor.csproj"
 COPY . .
 WORKDIR "/src/Stargate/src/Stargate.MessageProcessor"

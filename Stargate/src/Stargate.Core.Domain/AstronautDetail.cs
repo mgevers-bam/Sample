@@ -1,9 +1,10 @@
-﻿using CSharpFunctionalExtensions;
+using Common.LanguageExtensions.Contracts;
+using CSharpFunctionalExtensions;
 using Newtonsoft.Json;
 
 namespace Stargate.Core.Domain;
 
-public class AstronautDetail : Entity<int>, IDataModel
+public class AstronautDetail : Entity<int>, IDataModel<int>
 {
     private AstronautDetail() { }
 
@@ -19,6 +20,8 @@ public class AstronautDetail : Entity<int>, IDataModel
         CurrentDutyTitle = currentDutyTitle;
         CareerStartDate = careerStartDate;
     }
+
+    public object GetId() => Id;
 
     public int PersonId { get; private set; }
 
