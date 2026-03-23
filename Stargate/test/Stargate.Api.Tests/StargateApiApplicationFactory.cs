@@ -8,8 +8,6 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Stargate.Api.Queries;
-using Stargate.Core.Commands;
 using Stargate.Persistence.Repositories;
 using Stargate.Persistence.Sql;
 
@@ -31,7 +29,7 @@ public class StargateApiApplicationFactory : WebAppFactory<Program>, IAsyncLifet
 
             services
                 .AddScopedAsAllImplementedInterfaces<PersonRepository>()
-                .AddMediatRChaos(typeof(GetPeopleQuery).Assembly, typeof(CreatePersonCommand).Assembly);
+                .AddMediatRChaos();
             //services.AddMassTransitTestHarness();
         });
     }
