@@ -1,7 +1,5 @@
-using Common.Testing.Web.Auth;
 using Stargate.Core.Commands;
 using Stargate.Testing;
-using System.Security.Claims;
 
 namespace Stargate.Api.Tests;
 
@@ -16,10 +14,7 @@ public class AstronautTests : IClassFixture<StargateApiApplicationFactory>
 
     [Fact]
     public async Task AstronautCrudTest()
-    {
-        var token = FakeJwtTokens.GenerateJwtToken(new Claim("PersonIdentifier", Guid.NewGuid().ToString()));
-        //await _factory.InitializeDatabaseAsync();
-        
+    {        
         var client = _factory.CreateClient();
 
         var person = DataModels.CreatePerson();
@@ -29,10 +24,10 @@ public class AstronautTests : IClassFixture<StargateApiApplicationFactory>
         {
             Name = person.Name,
         };
-        var createPersonResponse = await client.PostAsync("/person", createPersonCommand);
+        var createPersonResponse = await client.PostAsync("/person", createPersonCommand, TestContext.Current.CancellationToken);
         Assert.True(createPersonResponse.IsSuccessStatusCode);
 
-        var getPersonResponse = await client.GetAsync($"/person/{person.Name}");
+        var getPersonResponse = await client.GetAsync($"/person/{person.Name}", TestContext.Current.CancellationToken);
         Assert.True(getPersonResponse.IsSuccessStatusCode);
 
         var createDutyCommand = new CreateAstronautDutyCommand
@@ -42,10 +37,10 @@ public class AstronautTests : IClassFixture<StargateApiApplicationFactory>
             DutyTitle = duty.DutyTitle,
             DutyStartDate = duty.DutyStartDate
         };
-        var createDutyResponse = await client.PostAsync("/astronautDuty", createDutyCommand);
+        var createDutyResponse = await client.PostAsync("/astronautDuty", createDutyCommand, TestContext.Current.CancellationToken);
         Assert.True(createDutyResponse.IsSuccessStatusCode);
 
-        var getDutyResponse = await client.GetAsync($"/astronautDuty/{person.Name}");
+        var getDutyResponse = await client.GetAsync($"/astronautDuty/{person.Name}", TestContext.Current.CancellationToken);
         Assert.True(getDutyResponse.IsSuccessStatusCode);
     }
 }

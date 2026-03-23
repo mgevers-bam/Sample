@@ -1,4 +1,5 @@
 using Common.Infrastructure.Auth;
+using Common.Infrastructure.Mediator;
 using Common.Infrastructure.OpenTelemetry;
 using Common.Infrastructure.ServiceBus.MassTransit;
 using MassTransit;
@@ -60,11 +61,7 @@ public partial class Program
             });
         }
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(typeof(GetPeopleQuery).Assembly);
-            cfg.RegisterServicesFromAssembly(typeof(CreatePersonCommand).Assembly);
-        });
+        services.AddMediatR([typeof(GetPeopleQuery).Assembly, typeof(CreatePersonCommand).Assembly]);
 
         services
             .AddLogging()

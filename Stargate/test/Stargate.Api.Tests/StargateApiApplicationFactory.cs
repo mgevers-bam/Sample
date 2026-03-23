@@ -1,4 +1,5 @@
 using Common.LanguageExtensions.DependencyInjection;
+using Common.Testing.Integration.Chaos;
 using Common.Testing.Web;
 using MassTransit;
 using Microsoft.AspNetCore.Hosting;
@@ -7,6 +8,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Stargate.Api.Queries;
+using Stargate.Core.Commands;
 using Stargate.Persistence.Repositories;
 using Stargate.Persistence.Sql;
 
@@ -26,7 +29,9 @@ public class StargateApiApplicationFactory : WebAppFactory<Program>, IAsyncLifet
                 options.UseSqlite($"Data Source={_databaseName}");
             });
 
-            services.AddScopedAsAllImplementedInterfaces<PersonRepository>();
+            services
+                .AddScopedAsAllImplementedInterfaces<PersonRepository>()
+                .AddMediatRChaos(typeof(GetPeopleQuery).Assembly, typeof(CreatePersonCommand).Assembly);
             //services.AddMassTransitTestHarness();
         });
     }
