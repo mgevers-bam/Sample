@@ -1,15 +1,14 @@
 using Common.Infrastructure.Auth;
 using Common.Infrastructure.Mediator;
 using Common.Infrastructure.OpenTelemetry;
+using Common.Infrastructure.OpenTelemetry.Enrichers;
 using Common.Infrastructure.ServiceBus.MassTransit;
 using MassTransit;
 using Microsoft.AspNetCore.Http.Connections;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Serilog;
 using Stargate.Api.EventHandlers;
 using Stargate.Api.Hubs;
-using Stargate.Api.OpenTelemetry;
 using Stargate.Api.Queries;
 using Stargate.Core.Commands;
 using Stargate.Infrastructure.ServerSentEvents;
@@ -20,6 +19,10 @@ namespace Stargate.Api;
 
 public partial class Program
 {
+    protected Program()
+    {
+    }
+
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -91,6 +94,8 @@ public partial class Program
 
         services.AddSignalR();
         services.AddJwtAuthentication("fake-domain", "fake-audience");
+
+        services.AddHttpClient();
     }
 
     private static void ConfigureApplication(WebApplication app)

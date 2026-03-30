@@ -5,7 +5,8 @@
       "commandVersion": "1.0",
       "serviceActions": {
         "stargate.api": "StartDebugging",
-        "stargate.messageprocessor": "StartDebugging"
+        "stargate.messageprocessor": "StartDebugging",
+        "communications.api": "StartDebugging"
       }
     }
   }

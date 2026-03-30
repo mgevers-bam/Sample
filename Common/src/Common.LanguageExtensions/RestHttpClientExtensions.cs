@@ -28,12 +28,14 @@ public static class RestHttpClientExtensions
         return SendAsync(httpClient, request, cancellationToken);
     }
 
-    public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string url, object body, CancellationToken cancellationToken = default)
+    public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string url, object? body = null, CancellationToken cancellationToken = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, url)
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+
+        if (body != null)
         {
-            Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json")
-        };
+            request.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+        }
 
         return SendAsync(httpClient, request, cancellationToken);
     }

@@ -64,6 +64,7 @@ public partial class Program
         });
 
         services.AddLogging();
+        services.AddHttpClient();
     }
 
     private static async Task EnsureDatabaseCreated(IDbContextFactory<StargateDbContext> dbContextFactory)
