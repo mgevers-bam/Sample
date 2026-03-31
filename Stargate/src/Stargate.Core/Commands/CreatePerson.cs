@@ -9,13 +9,15 @@ using Stargate.Core.Domain;
 
 namespace Stargate.Core.Commands;
 
-public class CreatePersonCommand : IRequest<Result<int>>
+public class CreatePersonCommand :
+    IRequest<Result<int>>,
+    MassTransit.Mediator.Request<Result<int>>
 {
     public required string Name { get; set; } = string.Empty;
 }
 
-public class CreatePersonCommandHandler(
-    ILogger<CreatePersonCommandHandler> logger,
+public class CreatePersonRequestHandler(
+    ILogger<CreatePersonRequestHandler> logger,
     IPersonRepository repository,
     IMediator mediator) : IRequestHandler<CreatePersonCommand, Result<int>>
 {
@@ -30,6 +32,33 @@ public class CreatePersonCommandHandler(
             {
                 logger.LogInformation("Created person {Name} with ID {Id}", person.Name, person.Id);
                 await mediator.Publish(new PersonCreatedEvent() { Id = person.Id, Name = person.Name }, cancellationToken);
+            })
+            .TapError(error =>
+            {
+                logger.LogError(
+                    "Failed to commit transaction for creating person {Name}: {Error}",
+                    request.Name,
+                    string.Join(",", error.Errors));
+            });
+    }
+}
+
+public class CreatePersonCommandHandler(
+    ILogger<CreatePersonCommandConsumer> logger,
+    IPersonRepository repository,
+    IPublishEndpoint publishEndpoint) : MassTransit.Mediator.MediatorRequestHandler<CreatePersonCommand, Result<int>>
+{
+    protected override async Task<Result<int>> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
+    {
+        var person = new Person(request.Name);
+        repository.Add(person);
+
+        return await repository.CommitTransaction(cancellationToken)
+            .Map(() => person.Id)
+            .Tap(async () =>
+            {
+                logger.LogInformation("Created person {Name} with ID {Id}", person.Name, person.Id);
+                await publishEndpoint.Publish(new PersonCreatedEvent() { Id = person.Id, Name = person.Name }, cancellationToken);
             })
             .TapError(error =>
             {

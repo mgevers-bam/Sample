@@ -45,11 +45,11 @@ public class CreatePersonTests
             .AssertOutput(dbError.AsTypedError<int>());
     }
 
-    private static HandlerTestSetup<CreatePersonCommandHandler, int> Arrange(
+    private static HandlerTestSetup<CreatePersonRequestHandler, int> Arrange(
         DatabaseState databaseState,
         Result? databaseError = null)
     {
-        return new HandlerTestSetup<CreatePersonCommandHandler, int>(
+        return new HandlerTestSetup<CreatePersonRequestHandler, int>(
             databaseState ?? DatabaseState.Empty,
             databaseError,
             configureMocker: mocker =>

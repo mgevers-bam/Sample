@@ -11,14 +11,14 @@ namespace Stargate.Core.Tests.Commands;
 
 public class CreatePersonTests_Mocks
 {
-    private readonly Mock<ILogger<CreatePersonCommandHandler>> _logger = new();
+    private readonly Mock<ILogger<CreatePersonRequestHandler>> _logger = new();
     private readonly Mock<IMediator> _mediator = new();
 
     [Fact]
     public async Task CanAddPerson()
     {
         var repository = GetRepository(Result.Success());
-        var handler = new CreatePersonCommandHandler(_logger.Object, repository.Object, _mediator.Object);
+        var handler = new CreatePersonRequestHandler(_logger.Object, repository.Object, _mediator.Object);
 
         var command = new CreatePersonCommand
         {
@@ -42,7 +42,7 @@ public class CreatePersonTests_Mocks
     {
         var conflictMessage = "A Person with the name already exists";
         var repository = GetRepository(Result.Conflict(conflictMessage));
-        var handler = new CreatePersonCommandHandler(_logger.Object, repository.Object, _mediator.Object);
+        var handler = new CreatePersonRequestHandler(_logger.Object, repository.Object, _mediator.Object);
 
         var command = new CreatePersonCommand
         {

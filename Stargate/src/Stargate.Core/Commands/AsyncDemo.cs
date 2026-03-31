@@ -15,8 +15,6 @@ public class AsyncDemo(HttpClient httpClient, ILogger<AsyncDemo> logger) :
     IRequestHandler<BetterAsync>,
     IRequestHandler<BestAsync>
 {
-    private readonly int[] _processingDelayRange = [150, 250];
-
     public Task Handle(BadAsync request, CancellationToken cancellationToken)
     {
         var enumerable = Enumerable.Range(0, request.RequestCount);
