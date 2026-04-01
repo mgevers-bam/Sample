@@ -57,63 +57,6 @@ public class CreateAstronautDutyCommandHandler(
                 request.Name,
                 string.Join(",", error.Errors)))
             .Map(person => person.AstronautDuties.Last().Id);
-
-        return await HandleVerbose(request, cancellationToken);
-    }
-
-    private async Task<Result<int>> HandleVerbose(CreateAstronautDutyCommand request, CancellationToken cancellationToken)
-    {
-        var personResult = await repository.GetPersonByNameAsync(request.Name, cancellationToken);
-
-        if (!personResult.IsSuccess)
-        {
-            logger.LogError(
-                "Failed to retreive person with name {Name}: {Error}",
-                request.Name,
-                string.Join(",", personResult.Errors));
-
-            return personResult.AsTypedError<Person, int>();
-        }
-
-        var person = personResult.Value;
-        var addDutyResult = person.AddAstronautDuty(
-            request.Rank,
-            request.DutyTitle,
-            request.DutyStartDate);
-
-        if (!addDutyResult.IsSuccess)
-        {
-            logger.LogError(
-                "Failed to add astronaught duty for person {Name}: {Error}",
-                request.Name,
-                string.Join(",", addDutyResult.Errors));
-            return addDutyResult.AsTypedError<int>();
-        }
-
-        repository.Update(person);
-        var commitResult = await repository.CommitTransaction(cancellationToken);
-
-        if (!commitResult.IsSuccess)
-        {
-            logger.LogError(
-                "Failed to commit transaction for creating person {Name}: {Error}",
-                request.Name,
-                string.Join(",", commitResult.Errors));
-            return commitResult.AsTypedError<int>();
-        }
-
-        logger.LogInformation("Created astronaut duty {duty}", person.AstronautDuties.Last());
-        var @event = new AstronautDutyCreatedEvent()
-        {
-            PersonId = person.Id,
-            Name = request.Name,
-            Rank = request.Rank,
-            DutyTitle = request.DutyTitle,
-            DutyStartDate = request.DutyStartDate
-        };
-        await mediator.Publish(@event, cancellationToken);
-
-        return Result.Success(person.AstronautDuties.Last().Id);
     }
 }
 
@@ -128,7 +71,7 @@ public class CreateAstronautDutyCommandConsumer(
         if (!personResult.IsSuccess)
         {
             logger.LogError(
-                "Failed to retreive person with name {Name}: {Error}",
+                "Failed to retrieve person with name {Name}: {Error}",
                 context.Message.Name,
                 string.Join(",", personResult.Errors));
 
@@ -145,7 +88,7 @@ public class CreateAstronautDutyCommandConsumer(
         if (!addDutyResult.IsSuccess)
         {
             logger.LogError(
-                "Failed to add astronaught duty for person {Name}: {Error}",
+                "Failed to add astronaut duty for person {Name}: {Error}",
                 context.Message.Name,
                 string.Join(",", addDutyResult.Errors));
 
@@ -181,4 +124,3 @@ public class CreateAstronautDutyCommandConsumer(
         await context.RespondAsync(Result.Success(person.AstronautDuties.Last().Id));
     }
 }
-

@@ -15,11 +15,11 @@ public class CosmosRepository<T> : IRepository<T>
     private readonly Container container;
 
     private readonly Policy _retryPolicy = Policy.Handle<CosmosException>(ex =>
-        (ex.StatusCode != HttpStatusCode.Conflict) || ex.StatusCode != HttpStatusCode.NotFound)
+        ex.StatusCode != HttpStatusCode.Conflict && ex.StatusCode != HttpStatusCode.NotFound)
         .WaitAndRetry(retryCount: 4, sleepDurationProvider: _ => TimeSpan.FromMilliseconds(250));
 
     private readonly Policy _circuitBreakerPolicy = Policy.Handle<CosmosException>(ex =>
-        (ex.StatusCode != HttpStatusCode.Conflict) || ex.StatusCode != HttpStatusCode.NotFound)
+        ex.StatusCode != HttpStatusCode.Conflict && ex.StatusCode != HttpStatusCode.NotFound)
         .CircuitBreaker(exceptionsAllowedBeforeBreaking: 3, durationOfBreak: TimeSpan.FromSeconds(3));
 
     public CosmosRepository(Container container)
@@ -29,8 +29,7 @@ public class CosmosRepository<T> : IRepository<T>
 
     public Task<Result<IReadOnlyList<T>>> LoadAll(int count = 1_000, CancellationToken cancellationToken = default)
     {
-        var options = new QueryRequestOptions();
-        options.MaxItemCount = count;
+        var options = new QueryRequestOptions { MaxItemCount = count };
 
         return Query(options, cancellationToken: cancellationToken);
     }
@@ -40,7 +39,8 @@ public class CosmosRepository<T> : IRepository<T>
         try
         {
             var idString = id.ToString();
-            var response = await container.ReadItemAsync<T>(idString, new PartitionKey(idString), cancellationToken: cancellationToken);
+            var response = await ExecuteWithRetry(() => 
+                container.ReadItemAsync<T>(idString, new PartitionKey(idString), cancellationToken: cancellationToken));
             var entity = response.Resource;
 
             return Result.Success(entity);
@@ -56,7 +56,7 @@ public class CosmosRepository<T> : IRepository<T>
         return Query(filter: entity => ids.Contains(entity.Id), cancellationToken: cancellationToken);
     }
 
-    public async virtual Task<Result<IReadOnlyList<T>>> Query(
+    public virtual async Task<Result<IReadOnlyList<T>>> Query(
         QueryRequestOptions? requestOptions = null,
         Expression<Func<T, bool>>? filter = null,
         CancellationToken cancellationToken = default)
@@ -101,10 +101,10 @@ public class CosmosRepository<T> : IRepository<T>
     {
         try
         {
-            var response = await container.CreateItemAsync(
+            var response = await ExecuteWithRetry(() => container.CreateItemAsync(
                 entity,
                 new PartitionKey(entity.Id.ToString()),
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken));
             var createdEntity = response.Resource;
 
             return Result.Success(createdEntity);
@@ -119,11 +119,11 @@ public class CosmosRepository<T> : IRepository<T>
     {
         try
         {
-            var response = await container.ReplaceItemAsync(
+            var response = await ExecuteWithRetry(() => container.ReplaceItemAsync(
                 entity,
                 entity.Id.ToString(),
                 new PartitionKey(entity.Id.ToString()),
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken));
 
             var updatedEntity = response.Resource;
             return Result.Success(updatedEntity);
@@ -138,10 +138,10 @@ public class CosmosRepository<T> : IRepository<T>
     {
         try
         {
-            var response = await container.DeleteItemAsync<T>(
+            await ExecuteWithRetry(() => container.DeleteItemAsync<T>(
                 entity.Id.ToString(),
                 new PartitionKey(entity.Id.ToString()),
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken));
 
             return Result.Success();
         }

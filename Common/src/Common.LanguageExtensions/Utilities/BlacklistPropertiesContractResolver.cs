@@ -1,8 +1,5 @@
 ﻿namespace Common.LanguageExtensions.Utilities;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Newtonsoft.Json;
@@ -33,7 +30,7 @@ public class BlacklistPropertiesContractResolver<T> : DefaultContractResolver
 
         if (type == typeof(T)) {
             return properties
-                .Where(property => this.blackListPropertyNames.Contains(property.PropertyName) == false)
+                .Where(property => !this.blackListPropertyNames.Contains(property.PropertyName))
                 .ToList();
         }
         else {
@@ -44,14 +41,19 @@ public class BlacklistPropertiesContractResolver<T> : DefaultContractResolver
     private static IReadOnlyCollection<string> GetPropertyNames(IReadOnlyCollection<Expression<Func<T, object>>> expressions)
     {
         return expressions
-            .Select(expression => GetMemberName(expression))
+            .Select(GetMemberName)
             .ToList();
     }
 
     private static string GetMemberName(Expression<Func<T, object>> expression)
     {
-        Expression member = expression.Body is MemberExpression ? expression.Body : (expression.Body as UnaryExpression)!.Operand;
-        return (member as MemberExpression)!.Member.Name;
+        var member = expression.Body switch
+        {
+            MemberExpression m => m,
+            UnaryExpression { Operand: MemberExpression m } => m,
+            _ => throw new ArgumentException("Expression must be a member expression", nameof(expression))
+        };
+        return member.Member.Name;
     }
 
     private List<JsonProperty> CreatePropertiesIncludingNonPublicProperties(Type type, MemberSerialization memberSerialization)

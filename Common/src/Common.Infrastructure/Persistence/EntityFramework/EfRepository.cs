@@ -15,9 +15,9 @@ public class EFRepository<TEntity, TDbContext> : IRepository<TEntity>
         this.dbContext = dbContext;
     }
 
-    public async virtual Task<Result<IReadOnlyList<TEntity>>> LoadAll(int count = 1_000, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<IReadOnlyList<TEntity>>> LoadAll(int count = 1_000, CancellationToken cancellationToken = default)
     {
-        var entities = await this.dbContext.Set<TEntity>()
+        var entities = await dbContext.Set<TEntity>()
             .ToListAsync(cancellationToken);
 
         return entities == null || entities.Count == 0
@@ -25,9 +25,9 @@ public class EFRepository<TEntity, TDbContext> : IRepository<TEntity>
             : Result<IReadOnlyList<TEntity>>.Success(entities);
     }
 
-    public async virtual Task<Result<TEntity>> LoadById(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<TEntity>> LoadById(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await this.dbContext.Set<TEntity>()
+        var entity = await dbContext.Set<TEntity>()
             .SingleOrDefaultAsync(p => id!.Equals(p.Id), cancellationToken);
 
         return entity == null
@@ -35,9 +35,9 @@ public class EFRepository<TEntity, TDbContext> : IRepository<TEntity>
             : Result<TEntity>.Success(entity);
     }
 
-    public async virtual Task<Result<IReadOnlyList<TEntity>>> LoadByIds(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<IReadOnlyList<TEntity>>> LoadByIds(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
     {
-        var entities = await this.dbContext.Set<TEntity>()
+        var entities = await dbContext.Set<TEntity>()
             .Where(entity => ids.Contains(entity.Id))
             .ToListAsync(cancellationToken);
 
@@ -51,7 +51,7 @@ public class EFRepository<TEntity, TDbContext> : IRepository<TEntity>
         dbContext.Add(entity);
         try
         {
-            var count = await this.dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
             return Result.Success(entity);
         }
         catch (DbUpdateException ex)
@@ -65,7 +65,7 @@ public class EFRepository<TEntity, TDbContext> : IRepository<TEntity>
         dbContext.Remove(entity);
         try
         {
-            var count = await this.dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (DbUpdateException ex)
@@ -79,7 +79,7 @@ public class EFRepository<TEntity, TDbContext> : IRepository<TEntity>
         dbContext.Update(entity);
         try
         {
-            var count = await this.dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
             return Result.Success(entity);
         }
         catch (DbUpdateException ex)

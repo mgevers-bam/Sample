@@ -10,14 +10,11 @@ public abstract class EventSourcedEntity<TDomainEvent, TEventData> : Entity<Guid
 
     protected EventSourcedEntity() : base() { }
 
-    public List<TDomainEvent> DomainEvents { get; protected set; } = new List<TDomainEvent>();
+    public List<TDomainEvent> DomainEvents { get; protected set; } = [];
 
     protected void AddDomainEvent(TEventData eventData)
     {
-        var events = DomainEvents.ToList();
-        events.Add(this.CreateDomainEvent(sequenceId: this.DomainEvents.Count + 1, eventData));
-
-        DomainEvents = events;
+        DomainEvents = [.. DomainEvents, CreateDomainEvent(sequenceId: DomainEvents.Count + 1, eventData)];
     }
 
     protected abstract TDomainEvent CreateDomainEvent(int sequenceId, TEventData eventData);

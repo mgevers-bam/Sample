@@ -67,11 +67,7 @@ public static partial class ResultFunctionalExtensions
         var dict = new Dictionary<string, int>();
         foreach (var message in messages)
         {
-            if (!dict.ContainsKey(message))
-            {
-                dict.Add(message, 0);
-            }
-
+            dict.TryAdd(message, 0);
             dict[message]++;
         }
 

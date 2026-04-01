@@ -8,7 +8,7 @@ public static partial class ResultFunctionalExtensions
     {
         var result = await resultTask;
 
-        if (result.IsSuccess == false)
+        if (!result.IsSuccess)
         {
             action(result);
         }
@@ -20,7 +20,7 @@ public static partial class ResultFunctionalExtensions
     {
         var result = await resultTask;
 
-        if (result.IsSuccess == false)
+        if (!result.IsSuccess)
         {
             action(result);
         }

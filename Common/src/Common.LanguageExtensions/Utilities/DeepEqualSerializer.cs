@@ -1,8 +1,5 @@
 ﻿namespace Common.LanguageExtensions.Utilities;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -15,7 +12,7 @@ public static class DeepEqualSerializer
         IReadOnlyCollection<Expression<Func<T, object>>>? blacklistProperties,
         bool includeNonPublicProperties = false)
     {
-        blacklistProperties ??= Array.Empty<Expression<Func<T, object>>>();
+        blacklistProperties ??= [];
 
         IContractResolver contractResolver = new BlacklistPropertiesContractResolver<T>(blacklistProperties, includeNonPublicProperties);
 
@@ -30,26 +27,31 @@ public static class DeepEqualSerializer
 
     private static JToken NormalizeJToken(JToken jToken)
     {
-        if (jToken is JObject jObject) {
-            var result = new JObject();
+        return jToken switch
+        {
+            JObject jObject => NormalizeJObject(jObject),
+            JArray jArray => NormalizeJArray(jArray),
+            _ => jToken
+        };
+    }
 
-            foreach (JProperty property in jObject.Properties().OrderBy(property => property.Name)) {
-                result.Add(propertyName: property.Name, value: NormalizeJToken(property.Value));
-            }
-
-            return result;
+    private static JObject NormalizeJObject(JObject jObject)
+    {
+        var result = new JObject();
+        foreach (JProperty property in jObject.Properties().OrderBy(p => p.Name))
+        {
+            result.Add(property.Name, NormalizeJToken(property.Value));
         }
-        else if (jToken is JArray jArray) {
-            var result = new JArray();
+        return result;
+    }
 
-            foreach (JToken item in jArray) {
-                result.Add(NormalizeJToken(item));
-            }
-
-            return result;
+    private static JArray NormalizeJArray(JArray jArray)
+    {
+        var result = new JArray();
+        foreach (JToken item in jArray)
+        {
+            result.Add(NormalizeJToken(item));
         }
-        else {
-            return jToken;
-        }
+        return result;
     }
 }

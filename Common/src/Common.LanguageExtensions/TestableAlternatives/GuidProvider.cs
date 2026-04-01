@@ -39,7 +39,7 @@ public sealed class GuidProvider : IDisposable
     /// <inheritdoc />
     public static GuidProvider UseMockGuid(Guid guid)
     {
-        return new GuidProvider(new[] { guid });
+        return new GuidProvider([guid]);
     }
 
     /// <inheritdoc />

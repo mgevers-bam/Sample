@@ -27,7 +27,7 @@ public class ProbeApiTests : IClassFixture<TestAppWebApplicationFactory>
     {
         await Arrange()
             .Act(httpClient => httpClient.GetAsync<ProbeResponse>("api/probe/public"))
-            .AssertOutput(Result.Success(new ProbeResponse(new List<ClaimView>())));
+            .AssertOutput(Result.Success(new ProbeResponse([])));
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class ProbeApiTests : IClassFixture<TestAppWebApplicationFactory>
     public async Task CanAccessPrivateEndpointWithToken()
     {
         var mockNow = DateTime.Parse("1/1/2000");
-        using (CurrentTime.UseMotckUtcNow(mockNow))
+        using (CurrentTime.UseMockUtcNow(mockNow))
         {
             var authToken = FakeJwtTokens.GenerateJwtToken(new Claim("userId", "123"));
 
@@ -67,12 +67,12 @@ public class ProbeApiTests : IClassFixture<TestAppWebApplicationFactory>
         var mockExpiredTime = mockNow.Add(FakeJwtTokens.TokenLifetime.Add(TimeSpan.FromMinutes(1)));
 
         var authToken = string.Empty;
-        using (CurrentTime.UseMotckUtcNow(mockNow))
+        using (CurrentTime.UseMockUtcNow(mockNow))
         {
             authToken = FakeJwtTokens.GenerateJwtToken(new Claim("userId", "123"));
         }
 
-        using (CurrentTime.UseMotckUtcNow(mockExpiredTime))
+        using (CurrentTime.UseMockUtcNow(mockExpiredTime))
         {
             await ArrangeWithToken(authToken)
                 .Act(httpClient => httpClient.GetAsync<ProbeResponse>("api/probe/private"))
@@ -85,10 +85,10 @@ public class ProbeApiTests : IClassFixture<TestAppWebApplicationFactory>
     {
         var apiKey = FakeApiKeyAuthenticator.CreateKeyWithClaims(new Claim("userId", "123"));
 
-        var probeResponse = new ProbeResponse(new List<ClaimView>()
-        {
+        var probeResponse = new ProbeResponse(
+        [
             new("userId", "123"),
-        });
+        ]);
 
         await ArrangeWithKey(apiKey)
             .Act(httpClient => httpClient.GetAsync<ProbeResponse>("api/probe/private"))
@@ -114,10 +114,8 @@ public class ProbeApiTests : IClassFixture<TestAppWebApplicationFactory>
             databaseError: Ardalis.Result.Result.CriticalError("cannot write to readonly database"));
     }
 
-    private static double ConvertToUnixTimestamp(DateTime date)
+    private static long ConvertToUnixTimestamp(DateTime date)
     {
-        var origin = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-        var diff = date.ToUniversalTime() - origin;
-        return Math.Floor(diff.TotalSeconds);
+        return new DateTimeOffset(date.ToUniversalTime()).ToUnixTimeSeconds();
     }
 }

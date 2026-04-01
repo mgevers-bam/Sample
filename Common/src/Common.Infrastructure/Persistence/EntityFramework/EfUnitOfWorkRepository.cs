@@ -143,7 +143,7 @@ public class EFUnitOfWorkRepository<TDbContext> : IUnitOfWorkRepository
     {
         try
         {
-            var count = await this.dbContext.SaveChangesAsync(cancellation);
+            await dbContext.SaveChangesAsync(cancellation);
             return Result.Success();
         }
         catch (DbUpdateException ex)

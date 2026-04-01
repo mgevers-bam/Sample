@@ -14,21 +14,8 @@ public class AstronautDuty : Entity<int>, IDataModel<int>
         Person person,
         string rank,
         string dutyTitle,
-        DateTime dutyStartDate)
-    {
-        Person = person;
-        PersonId = person.Id;
-        Rank = rank;
-        DutyTitle = dutyTitle;
-        DutyStartDate = dutyStartDate;
-    }
-
-    public AstronautDuty(
-        Person person,
-        string rank,
-        string dutyTitle,
         DateTime dutyStartDate,
-        DateTime? dutyEndDate)
+        DateTime? dutyEndDate = null)
     {
         Person = person;
         PersonId = person.Id;

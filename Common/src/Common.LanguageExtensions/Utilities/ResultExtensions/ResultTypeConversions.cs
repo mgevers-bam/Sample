@@ -11,45 +11,8 @@ public static partial class ResultFunctionalExtensions
             throw new InvalidOperationException("can only cast with error result");
         }
 
-        IReadOnlyCollection<string> errors = result.Errors
-            .Concat(result.ValidationErrors.Select(e => e.ErrorMessage))
-            .ToList();
-
-        switch (result.Status)
-        {
-            case ResultStatus.Conflict:
-                return errors.Count == 1
-                    ? Result.Conflict(errors.Single())
-                    : Result.Conflict(string.Concat(errors, ","));
-            case ResultStatus.Error:
-                return errors.Count == 1
-                    ? Result.Error(errors.Single())
-                    : Result.Error(new ErrorList(errors));
-            case ResultStatus.Forbidden:
-                return errors.Count == 1
-                    ? Result.Forbidden(errors.Single())
-                    : Result.Forbidden(string.Concat(errors, ","));
-            case ResultStatus.Invalid:
-                return errors.Count == 1
-                    ? Result.Invalid(new ValidationError(errors.Single()))
-                    : Result.Invalid(new ValidationError(string.Concat(errors, ",")));
-            case ResultStatus.NotFound:
-                return errors.Count == 1
-                    ? Result.NotFound(errors.Single())
-                    : Result.NotFound(string.Concat(errors, ","));
-            case ResultStatus.Unauthorized:
-                return errors.Count == 1
-                    ? Result.Unauthorized(errors.Single())
-                    : Result.Unauthorized(string.Concat(errors, ","));
-            case ResultStatus.Unavailable:
-                return errors.Count == 1
-                    ? Result.Unavailable(errors.Single())
-                    : Result.Unavailable([.. errors]);
-            default:
-                return errors.Count == 1
-                    ? Result.CriticalError(errors.Single())
-                    : Result.CriticalError([.. errors]);
-        }
+        var errors = GetAllErrors(result.Errors, result.ValidationErrors);
+        return ConvertToTypedResult<K>(result.Status, errors);
     }
 
     public static Result<K> AsTypedError<T, K>(this Result<T> result)
@@ -59,45 +22,8 @@ public static partial class ResultFunctionalExtensions
             throw new InvalidOperationException("can only cast with error result");
         }
 
-        IReadOnlyCollection<string> errors = result.Errors
-            .Concat(result.ValidationErrors.Select(e => e.ErrorMessage))
-            .ToList();
-
-        switch (result.Status)
-        {
-            case ResultStatus.Conflict:
-                return errors.Count == 1
-                    ? Result.Conflict(errors.Single())
-                    : Result.Conflict(string.Concat(errors, ","));
-            case ResultStatus.Error:
-                return errors.Count == 1
-                    ? Result.Error(errors.Single())
-                    : Result.Error(new ErrorList(errors));
-            case ResultStatus.Forbidden:
-                return errors.Count == 1
-                    ? Result.Forbidden(errors.Single())
-                    : Result.Forbidden(string.Concat(errors, ","));
-            case ResultStatus.Invalid:
-                return errors.Count == 1
-                    ? Result.Invalid(new ValidationError(errors.Single()))
-                    : Result.Invalid(new ValidationError(string.Concat(errors, ",")));
-            case ResultStatus.NotFound:
-                return errors.Count == 1
-                    ? Result.NotFound(errors.Single())
-                    : Result.NotFound(string.Concat(errors, ","));
-            case ResultStatus.Unauthorized:
-                return errors.Count == 1
-                    ? Result.Unauthorized(errors.Single())
-                    : Result.Unauthorized(string.Concat(errors, ","));
-            case ResultStatus.Unavailable:
-                return errors.Count == 1
-                    ? Result.Unavailable(errors.Single())
-                    : Result.Unavailable([.. errors]);
-            default:
-                return errors.Count == 1
-                    ? Result.CriticalError(errors.Single())
-                    : Result.CriticalError([.. errors]);
-        }
+        var errors = GetAllErrors(result.Errors, result.ValidationErrors);
+        return ConvertToTypedResult<K>(result.Status, errors);
     }
 
     public static Result AsResult<T>(this Result<T> result)
@@ -107,45 +33,8 @@ public static partial class ResultFunctionalExtensions
             return Result.Success();
         }
 
-        IReadOnlyCollection<string> errors = result.Errors
-            .Concat(result.ValidationErrors.Select(e => e.ErrorMessage))
-            .ToList();
-
-        switch (result.Status)
-        {
-            case ResultStatus.Conflict:
-                return errors.Count == 1
-                    ? Result.Conflict(errors.Single())
-                    : Result.Conflict(string.Concat(errors, ","));
-            case ResultStatus.Error:
-                return errors.Count == 1
-                    ? Result.Error(errors.Single())
-                    : Result.Error(new ErrorList(errors));
-            case ResultStatus.Forbidden:
-                return errors.Count == 1
-                    ? Result.Forbidden(errors.Single())
-                    : Result.Forbidden(string.Concat(errors, ","));
-            case ResultStatus.Invalid:
-                return errors.Count == 1
-                    ? Result.Invalid(new ValidationError(errors.Single()))
-                    : Result.Invalid(new ValidationError(string.Concat(errors, ",")));
-            case ResultStatus.NotFound:
-                return errors.Count == 1
-                    ? Result.NotFound(errors.Single())
-                    : Result.NotFound(string.Concat(errors, ","));
-            case ResultStatus.Unauthorized:
-                return errors.Count == 1
-                    ? Result.Unauthorized(errors.Single())
-                    : Result.Unauthorized(string.Concat(errors, ","));
-            case ResultStatus.Unavailable:
-                return errors.Count == 1
-                    ? Result.Unavailable(errors.Single())
-                    : Result.Unavailable([.. errors]);
-            default:
-                return errors.Count == 1
-                    ? Result.CriticalError(errors.Single())
-                    : Result.CriticalError([.. errors]);
-        }
+        var errors = GetAllErrors(result.Errors, result.ValidationErrors);
+        return ConvertToUntypedResult(result.Status, errors);
     }
 
     public static async Task<Result> AsResult<T>(this Task<Result<T>> resultTask)
@@ -158,5 +47,60 @@ public static partial class ResultFunctionalExtensions
         }
 
         return Result.CriticalError([.. result.Errors]);
+    }
+
+    private static IReadOnlyCollection<string> GetAllErrors(
+        IEnumerable<string> errors,
+        IEnumerable<ValidationError> validationErrors)
+    {
+        return errors
+            .Concat(validationErrors.Select(e => e.ErrorMessage))
+            .ToList();
+    }
+
+    private static Result<K> ConvertToTypedResult<K>(ResultStatus status, IReadOnlyCollection<string> errors)
+    {
+        var errorMessage = errors.Count == 1 ? errors.Single() : string.Join(",", errors);
+
+        return status switch
+        {
+            ResultStatus.Conflict => Result.Conflict(errorMessage),
+            ResultStatus.Error => errors.Count == 1
+                ? Result.Error(errorMessage)
+                : Result.Error(new ErrorList(errors)),
+            ResultStatus.Forbidden => Result.Forbidden(errorMessage),
+            ResultStatus.Invalid => Result.Invalid(new ValidationError(errorMessage)),
+            ResultStatus.NotFound => Result.NotFound(errorMessage),
+            ResultStatus.Unauthorized => Result.Unauthorized(errorMessage),
+            ResultStatus.Unavailable => errors.Count == 1
+                ? Result.Unavailable(errorMessage)
+                : Result.Unavailable([.. errors]),
+            _ => errors.Count == 1
+                ? Result.CriticalError(errorMessage)
+                : Result.CriticalError([.. errors])
+        };
+    }
+
+    private static Result ConvertToUntypedResult(ResultStatus status, IReadOnlyCollection<string> errors)
+    {
+        var errorMessage = errors.Count == 1 ? errors.Single() : string.Join(",", errors);
+
+        return status switch
+        {
+            ResultStatus.Conflict => Result.Conflict(errorMessage),
+            ResultStatus.Error => errors.Count == 1
+                ? Result.Error(errorMessage)
+                : Result.Error(new ErrorList(errors)),
+            ResultStatus.Forbidden => Result.Forbidden(errorMessage),
+            ResultStatus.Invalid => Result.Invalid(new ValidationError(errorMessage)),
+            ResultStatus.NotFound => Result.NotFound(errorMessage),
+            ResultStatus.Unauthorized => Result.Unauthorized(errorMessage),
+            ResultStatus.Unavailable => errors.Count == 1
+                ? Result.Unavailable(errorMessage)
+                : Result.Unavailable([.. errors]),
+            _ => errors.Count == 1
+                ? Result.CriticalError(errorMessage)
+                : Result.CriticalError([.. errors])
+        };
     }
 }
