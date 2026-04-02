@@ -30,7 +30,8 @@ public class StargateApiApplicationFactory : WebAppFactory<Program>, IAsyncLifet
             services
                 .AddScopedAsAllImplementedInterfaces<PersonRepository>()
                 .AddMediatRChaos();
-            //services.AddMassTransitTestHarness();
+
+            services.AddMassTransitTestHarness();
         });
     }
 

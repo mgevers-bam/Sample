@@ -1,5 +1,6 @@
 ﻿using Ardalis.Result;
 using Common.LanguageExtensions.Contracts;
+using Common.LanguageExtensions.Utilities.ResultExtensions;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Polly;
@@ -8,12 +9,9 @@ using System.Net;
 
 namespace Common.Infrastructure.Persistence.Cosmos;
 
-//TODO optimize bulk operations
-public class CosmosRepository<T> : IRepository<T>
+public class CosmosRepository<T>(Container container) : IRepository<T>
     where T : class, ICosmosDataModel
 {
-    private readonly Container container;
-
     private readonly Policy _retryPolicy = Policy.Handle<CosmosException>(ex =>
         ex.StatusCode != HttpStatusCode.Conflict && ex.StatusCode != HttpStatusCode.NotFound)
         .WaitAndRetry(retryCount: 4, sleepDurationProvider: _ => TimeSpan.FromMilliseconds(250));
@@ -21,11 +19,6 @@ public class CosmosRepository<T> : IRepository<T>
     private readonly Policy _circuitBreakerPolicy = Policy.Handle<CosmosException>(ex =>
         ex.StatusCode != HttpStatusCode.Conflict && ex.StatusCode != HttpStatusCode.NotFound)
         .CircuitBreaker(exceptionsAllowedBeforeBreaking: 3, durationOfBreak: TimeSpan.FromSeconds(3));
-
-    public CosmosRepository(Container container)
-    {
-        this.container = container;
-    }
 
     public Task<Result<IReadOnlyList<T>>> LoadAll(int count = 1_000, CancellationToken cancellationToken = default)
     {
@@ -115,6 +108,42 @@ public class CosmosRepository<T> : IRepository<T>
         }
     }
 
+    public async Task<Result<IReadOnlyList<T>>> CreateMany(IReadOnlyCollection<T> entities, CancellationToken cancellationToken = default)
+    {
+        if (entities.Count == 0)
+        {
+            return Result.Success<IReadOnlyList<T>>([]);
+        }
+
+        var tasks = entities.Select(async entity =>
+        {
+            try
+            {
+                var response = await ExecuteWithRetry(() => container.CreateItemAsync(
+                    entity,
+                    new PartitionKey(entity.Id.ToString()),
+                    cancellationToken: cancellationToken));
+                return Result.Success(response.Resource);
+            }
+            catch (CosmosException e)
+            {
+                return Result<T>.Error($"{entity.Id}: {e.Message}");
+            }
+        });
+
+        var results = await Task.WhenAll(tasks);
+
+        var failures = results.Where(r => !r.IsSuccess).ToList();
+        if (failures.Count > 0)
+        {
+            return failures
+                .Combine()
+                .AsTypedError<T, IReadOnlyList<T>>();
+        }
+
+        return Result.Success<IReadOnlyList<T>>([.. results.Select(r => r.Value)]);
+    }
+
     public async Task<Result<T>> Update(T entity, CancellationToken cancellationToken = default)
     {
         try
@@ -134,6 +163,43 @@ public class CosmosRepository<T> : IRepository<T>
         }
     }
 
+    public async Task<Result<IReadOnlyList<T>>> UpdateMany(IReadOnlyCollection<T> entities, CancellationToken cancellationToken = default)
+    {
+        if (entities.Count == 0)
+        {
+            return Result.Success<IReadOnlyList<T>>([]);
+        }
+
+        var tasks = entities.Select(async entity =>
+        {
+            try
+            {
+                var response = await ExecuteWithRetry(() => container.ReplaceItemAsync(
+                    entity,
+                    entity.Id.ToString(),
+                    new PartitionKey(entity.Id.ToString()),
+                    cancellationToken: cancellationToken));
+                return Result.Success(response.Resource);
+            }
+            catch (CosmosException e)
+            {
+                return Result<T>.Error($"{entity.Id}: {e.Message}");
+            }
+        });
+
+        var results = await Task.WhenAll(tasks);
+
+        var failures = results.Where(r => !r.IsSuccess).ToList();
+        if (failures.Count > 0)
+        {
+            return failures
+                .Combine()
+                .AsTypedError<T, IReadOnlyList<T>>();
+        }
+
+        return Result.Success<IReadOnlyList<T>>([.. results.Select(r => r.Value)]);
+    }
+
     public async Task<Result> Delete(T entity, CancellationToken cancellationToken = default)
     {
         try
@@ -149,6 +215,40 @@ public class CosmosRepository<T> : IRepository<T>
         {
             return Result.Error(e.Message);
         }
+    }
+
+    public async Task<Result> DeleteMany(IReadOnlyCollection<T> entities, CancellationToken cancellationToken = default)
+    {
+        if (entities.Count == 0)
+        {
+            return Result.Success();
+        }
+
+        var tasks = entities.Select(async entity =>
+        {
+            try
+            {
+                await ExecuteWithRetry(() => container.DeleteItemAsync<T>(
+                    entity.Id.ToString(),
+                    new PartitionKey(entity.Id.ToString()),
+                    cancellationToken: cancellationToken));
+                return Result.Success();
+            }
+            catch (CosmosException e)
+            {
+                return Result.Error($"{entity.Id}: {e.Message}");
+            }
+        });
+
+        var results = await Task.WhenAll(tasks);
+
+        var failures = results.Where(r => !r.IsSuccess).ToList();
+        if (failures.Count > 0)
+        {
+            return failures.Combine();
+        }
+
+        return Result.Success();
     }
 
     private Task<TRet> ExecuteWithRetry<TRet>(Func<Task<TRet>> func)

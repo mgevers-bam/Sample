@@ -62,6 +62,27 @@ public static partial class ResultFunctionalExtensions
         return Result.CriticalError(errorMessage);
     }
 
+    public static Result<T> Combine<T>(this IEnumerable<Result<T>> results, string? errorMessagesSeparator = null)
+    {
+        var failedResults = results.Where(x => !x.IsSuccess).ToList();
+
+        if (failedResults.Count == 0)
+        {
+            return Result.Success();
+        }
+
+        if (failedResults.Count == 1)
+        {
+            return failedResults.Single();
+        }
+
+        string errorMessage = string.Join(
+            errorMessagesSeparator ?? Configuration.ErrorMessagesSeparator,
+            AggregateMessages(failedResults.SelectMany(x => x.Errors)));
+
+        return Result.CriticalError(errorMessage);
+    }
+
     private static IEnumerable<string> AggregateMessages(IEnumerable<string> messages)
     {
         var dict = new Dictionary<string, int>();
@@ -73,5 +94,4 @@ public static partial class ResultFunctionalExtensions
 
         return dict.Select(x => x.Value == 1 ? x.Key : $"{x.Key} ({x.Value}×)");
     }
-
 }
