@@ -26,7 +26,8 @@ public static class OpenTelemetryHostApplicationBuilderExtensions
                 meterBuilder
                     .SetResourceBuilder(resourceBuilder)
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation()
+                    .AddRuntimeInstrumentation();
             })
             .WithTracing(tracingBuilder =>
             {
