@@ -146,7 +146,7 @@ services:
       OTEL_SERVICE_NAME: "stargate-api-2"
 
   stargate.message.processor:
-    image: ${DOCKER_REGISTRY-}stargateapi
+    image: ${DOCKER_REGISTRY-}stargatemessageprocessor
     container_name: stargate.message.processor
     build:
       context: .

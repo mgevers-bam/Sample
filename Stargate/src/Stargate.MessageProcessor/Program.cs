@@ -41,7 +41,7 @@ public partial class Program
             if (!builder.Environment.IsEnvironment("Testing"))
             {
                 var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<StargateDbContext>>();
-                await EnsureDatabaseCreated(dbContextFactory);
+                await EnsureDatabaseCreated(dbContextFactory, logger);
             }
         }
 
@@ -67,11 +67,21 @@ public partial class Program
         services.AddHttpClient();
     }
 
-    private static async Task EnsureDatabaseCreated(IDbContextFactory<StargateDbContext> dbContextFactory)
+    private static async Task EnsureDatabaseCreated(IDbContextFactory<StargateDbContext> dbContextFactory, ILogger<Program> logger)
     {
-        using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        try
+        {
+            using var dbContext = await dbContextFactory.CreateDbContextAsync();
 
-        await dbContext.Database.EnsureCreatedAsync();
-        await dbContext.Database.MigrateAsync();
+            await dbContext.Database.EnsureCreatedAsync();
+            await dbContext.Database.MigrateAsync();
+
+            logger.LogInformation("Database created and migrated successfully");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while creating or migrating the database");
+        }
+
     }
 }
