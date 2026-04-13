@@ -21,7 +21,8 @@ public static class OpenTelemetryHostApplicationBuilderExtensions
 
         builder.Services
             .AddOpenTelemetry()
-            .WithMetrics(meterBuilder => {
+            .WithMetrics(meterBuilder =>
+            {
                 meterBuilder
                     .SetResourceBuilder(resourceBuilder)
                     .AddAspNetCoreInstrumentation()

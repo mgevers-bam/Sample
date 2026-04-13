@@ -9,10 +9,17 @@
     <DockerServiceName>stargate.api</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="alloy-config.alloy" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="grafana-dashboards.yaml" />
+    <None Include="grafana-dashboards\aspire-clone-dashboard.json" />
+    <None Include="grafana-datasources.yaml" />
+    <None Include="loki-config.yaml" />
+    <None Include="mimir-config.yaml" />
+    <None Include="tempo-config.yaml" />
   </ItemGroup>
 </Project>

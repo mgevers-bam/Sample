@@ -1,0 +1,74 @@
+// Grafana Alloy Configuration
+// Receives OTLP telemetry and routes to Tempo, Mimir, Loki, and Aspire Dashboard
+
+// =============================================================================
+// OTLP Receivers
+// =============================================================================
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    traces  = [otelcol.processor.batch.default.input]
+    metrics = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+  }
+}
+
+// =============================================================================
+// Processors
+// =============================================================================
+
+otelcol.processor.batch "default" {
+  timeout = "1s"
+  send_batch_size = 1024
+
+  output {
+    traces  = [otelcol.exporter.otlp.tempo.input, otelcol.exporter.otlp.aspire.input]
+    metrics = [otelcol.exporter.otlphttp.mimir.input, otelcol.exporter.otlp.aspire.input]
+    logs    = [otelcol.exporter.otlphttp.loki.input, otelcol.exporter.otlp.aspire.input]
+  }
+}
+
+// =============================================================================
+// Exporters
+// =============================================================================
+
+// Tempo - Traces (via OTLP gRPC on Tempo's receiver port)
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// Mimir - Metrics (via OTLP HTTP)
+otelcol.exporter.otlphttp "mimir" {
+  client {
+    endpoint = "http://mimir:9009/otlp"
+  }
+}
+
+// Loki - Logs
+otelcol.exporter.otlphttp "loki" {
+  client {
+    endpoint = "http://loki:3100/otlp"
+  }
+}
+
+// Aspire Dashboard - All telemetry for .NET development
+otelcol.exporter.otlp "aspire" {
+  client {
+    endpoint = "aspire-dashboard:18889"
+    tls {
+      insecure = true
+    }
+  }
+}

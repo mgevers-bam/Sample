@@ -7,7 +7,7 @@
     <PackageVersion Include="Ardalis.Result.AspNetCore" Version="10.1.0" />
     <PackageVersion Include="coverlet.collector" Version="8.0.0" />
     <PackageVersion Include="CSharpFunctionalExtensions" Version="3.7.0" />
-	<PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.3.2" />
+    <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.3.2" />
     <PackageVersion Include="MassTransit" Version="8.5.8" />
     <PackageVersion Include="MassTransit.EntityFrameworkCore" Version="8.5.8" />
     <PackageVersion Include="MassTransit.Newtonsoft" Version="8.5.8" />

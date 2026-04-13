@@ -43,32 +43,32 @@ public class CreatePersonRequestHandler(
     }
 }
 
-public class CreatePersonCommandHandler(
-    ILogger<CreatePersonCommandConsumer> logger,
-    IPersonRepository repository,
-    IPublishEndpoint publishEndpoint) : MassTransit.Mediator.MediatorRequestHandler<CreatePersonCommand, Result<int>>
-{
-    protected override async Task<Result<int>> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
-    {
-        var person = new Person(request.Name);
-        repository.Add(person);
+//public class CreatePersonCommandHandler(
+//    ILogger<CreatePersonCommandConsumer> logger,
+//    IPersonRepository repository,
+//    IPublishEndpoint publishEndpoint) : MassTransit.Mediator.MediatorRequestHandler<CreatePersonCommand, Result<int>>
+//{
+//    protected override async Task<Result<int>> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
+//    {
+//        var person = new Person(request.Name);
+//        repository.Add(person);
 
-        return await repository.CommitTransaction(cancellationToken)
-            .Map(() => person.Id)
-            .Tap(async () =>
-            {
-                logger.LogInformation("Created person {Name} with ID {Id}", person.Name, person.Id);
-                await publishEndpoint.Publish(new PersonCreatedEvent() { Id = person.Id, Name = person.Name }, cancellationToken);
-            })
-            .TapError(error =>
-            {
-                logger.LogError(
-                    "Failed to commit transaction for creating person {Name}: {Error}",
-                    request.Name,
-                    string.Join(",", error.Errors));
-            });
-    }
-}
+//        return await repository.CommitTransaction(cancellationToken)
+//            .Map(() => person.Id)
+//            .Tap(async () =>
+//            {
+//                logger.LogInformation("Created person {Name} with ID {Id}", person.Name, person.Id);
+//                await publishEndpoint.Publish(new PersonCreatedEvent() { Id = person.Id, Name = person.Name }, cancellationToken);
+//            })
+//            .TapError(error =>
+//            {
+//                logger.LogError(
+//                    "Failed to commit transaction for creating person {Name}: {Error}",
+//                    request.Name,
+//                    string.Join(",", error.Errors));
+//            });
+//    }
+//}
 
 public class CreatePersonCommandConsumer(
     ILogger<CreatePersonCommandConsumer> logger,

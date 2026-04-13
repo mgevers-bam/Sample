@@ -1,5 +1,6 @@
 services:
 
+  # Sql Server
   sql-server:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sql-server
@@ -9,16 +10,90 @@ services:
       - ACCEPT_EULA=y
       - SA_PASSWORD=Password123!!
 
+  # Aspire Dashboard - .NET development dashboard
   aspire-dashboard:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
     container_name: aspire-dashboard
     ports:
-      - 18888:18888
-      - 4317:18889
+      - 18888:18888 # Aspire UI
+      ## - 4317:18889
     environment:
-       - CircuitOptions__DetailedErrors=true
-       - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true 
+      - CircuitOptions__DetailedErrors=true
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
 
+  # Grafana Alloy - OpenTelemetry collector (Grafana's distribution)
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    command: ["run", "/etc/alloy/config.alloy", "--server.http.listen-addr=0.0.0.0:12345"]
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "12345:12345" # Alloy UI
+    depends_on:
+      - tempo
+      - loki
+      - mimir
+      - aspire-dashboard
+
+  # Grafana Tempo - distributed tracing backend
+  tempo:
+    image: grafana/tempo:2.4.2
+    container_name: tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP API
+      - "9095:9095"   # Tempo gRPC
+
+  # Grafana Loki - log aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+
+  # Grafana Mimir - scalable metrics backend
+  mimir:
+    image: grafana/mimir:latest
+    container_name: mimir
+    command: ["-config.file=/etc/mimir/mimir.yaml"]
+    volumes:
+      - ./mimir-config.yaml:/etc/mimir/mimir.yaml:ro
+      - mimir-data:/data
+    ports:
+      - "9009:9009"
+
+  # Grafana - visualization dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./grafana-dashboards:/etc/grafana/provisioning/dashboards/json:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    depends_on:
+      - mimir
+      - tempo
+      - loki
+
+  # rabbitmq
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management
@@ -38,14 +113,15 @@ services:
       dockerfile: Stargate/src/Stargate.Api/Dockerfile
     depends_on:
         - sql-server
-        - rabbitmq 
+        - rabbitmq
+        - alloy
     ports:
       - "5001:5001"
     environment:
       ASPNETCORE_URLS: http://+:5001
       OTEL_TRACES_SAMPLER: "always_on"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
       OTEL_SERVICE_NAME: "stargate-api-1"
 
   stargate.api.2:
@@ -57,13 +133,14 @@ services:
     depends_on:
         - sql-server
         - rabbitmq
+        - alloy
     ports:
       - "5002:5002"
     environment:
       ASPNETCORE_URLS: http://+:5002
       OTEL_TRACES_SAMPLER: "always_on"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
       OTEL_SERVICE_NAME: "stargate-api-2"
 
   stargate.message.processor:
@@ -74,11 +151,12 @@ services:
       dockerfile: Stargate/src/Stargate.MessageProcessor/Dockerfile
     depends_on:
         - sql-server
-        - rabbitmq 
+        - rabbitmq
+        - alloy
     environment:
       OTEL_TRACES_SAMPLER: "always_on"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
       OTEL_SERVICE_NAME: "stargate-message-processor"
 
   communications.api:
@@ -87,11 +165,19 @@ services:
     build:
       context: .
       dockerfile: Communications/src/Communications.Api/Dockerfile
+    depends_on:
+        - alloy
     ports:
       - "5003:5003"
     environment:
       ASPNETCORE_URLS: http://+:5003
       OTEL_TRACES_SAMPLER: "always_on"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
-      OTEL_SERVICE_NAME: "communications-api-"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_SERVICE_NAME: "communications-api"
+
+volumes:
+  loki-data:
+  tempo-data:
+  mimir-data:
+  grafana-data:
