@@ -9,6 +9,8 @@ services:
     environment:
       - ACCEPT_EULA=y
       - SA_PASSWORD=Password123!!
+    volumes:
+      - sqlserver-data:/var/opt/mssql
 
   # Aspire Dashboard - .NET development dashboard
   aspire-dashboard:
@@ -177,6 +179,7 @@ services:
       OTEL_SERVICE_NAME: "communications-api"
 
 volumes:
+  sqlserver-data:
   loki-data:
   tempo-data:
   mimir-data:
