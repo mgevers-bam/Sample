@@ -93,7 +93,7 @@
             "uid": "mimir"
           },
           "editorMode": "code",
-          "expr": "count(dotnet_process_memory_working_set{job=~\"$service\"})",
+          "expr": "count(count by (job) (dotnet_process_memory_working_set{job=~\"$service\"}))",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -467,6 +467,70 @@
         "x": 0,
         "y": 5
       },
+      "id": 104,
+      "panels": [],
+      "title": "Logs",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 40,
+      "options": {
+        "dedupStrategy": "signature",
+        "detailsMode": "inline",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "fontSize": "default",
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showControls": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "syntaxHighlighting": true,
+        "timestampResolution": "ms",
+        "unwrappedColumns": false,
+        "wrapLogMessage": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "{service_name=~\"$service\"} | severity_text=~\"$logLevel\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Application Logs",
+      "transparent": true,
+      "type": "logs"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
       "id": 103,
       "panels": [],
       "title": "Distributed Traces",
@@ -519,7 +583,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 17
       },
       "id": 30,
       "options": {
@@ -544,77 +608,14 @@
           },
           "filters": [],
           "limit": 50,
-          "queryType": "traceqlSearch",
+          "query": "{resource.service.name =~ \"$service\"}",
+          "queryType": "traceql",
           "refId": "A",
           "tableType": "traces"
         }
       ],
       "title": "Recent Traces",
       "type": "table"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 104,
-      "panels": [],
-      "title": "Logs",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 19
-      },
-      "id": 40,
-      "options": {
-        "dedupStrategy": "signature",
-        "detailsMode": "inline",
-        "enableInfiniteScrolling": false,
-        "enableLogDetails": true,
-        "fontSize": "default",
-        "prettifyLogMessage": true,
-        "showCommonLabels": false,
-        "showControls": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "syntaxHighlighting": true,
-        "timestampResolution": "ms",
-        "unwrappedColumns": false,
-        "wrapLogMessage": true
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "direction": "backward",
-          "editorMode": "code",
-          "expr": "{service_name=~\".+\"}",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "title": "Application Logs",
-      "transparent": true,
-      "type": "logs"
     },
     {
       "collapsed": false,
@@ -1668,7 +1669,7 @@
   "templating": {
     "list": [
       {
-        "allValue": ".*",
+        "allValue": ".+",
         "current": {
           "text": "All",
           "value": "$__all"
@@ -1677,14 +1678,14 @@
           "type": "prometheus",
           "uid": "mimir"
         },
-        "definition": "label_values(up, job)",
+        "definition": "label_values(target_info, job)",
         "includeAll": true,
         "label": "Service",
         "multi": true,
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(up, job)",
+          "query": "label_values(target_info, job)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
@@ -1692,6 +1693,52 @@
         "regexApplyTo": "value",
         "sort": 1,
         "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "Information",
+          "value": "Information|Warning|Error|Critical"
+        },
+        "description": "Minimum log level to display",
+        "includeAll": false,
+        "label": "Min Log Level",
+        "multi": false,
+        "name": "logLevel",
+        "options": [
+          {
+            "selected": false,
+            "text": "Trace",
+            "value": "Trace|Debug|Information|Warning|Error|Critical"
+          },
+          {
+            "selected": false,
+            "text": "Debug",
+            "value": "Debug|Information|Warning|Error|Critical"
+          },
+          {
+            "selected": true,
+            "text": "Information",
+            "value": "Information|Warning|Error|Critical"
+          },
+          {
+            "selected": false,
+            "text": "Warning",
+            "value": "Warning|Error|Critical"
+          },
+          {
+            "selected": false,
+            "text": "Error",
+            "value": "Error|Critical"
+          },
+          {
+            "selected": false,
+            "text": "Critical",
+            "value": "Critical"
+          }
+        ],
+        "query": "Trace : Trace|Debug|Information|Warning|Error|Critical, Debug : Debug|Information|Warning|Error|Critical, Information : Information|Warning|Error|Critical, Warning : Warning|Error|Critical, Error : Error|Critical, Critical : Critical",
+        "type": "custom"
       }
     ]
   },

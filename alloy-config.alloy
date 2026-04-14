@@ -30,8 +30,24 @@ otelcol.processor.batch "default" {
 
   output {
     traces  = [otelcol.exporter.otlp.tempo.input, otelcol.exporter.otlp.aspire.input]
-    metrics = [otelcol.exporter.otlphttp.mimir.input, otelcol.exporter.otlp.aspire.input]
+    metrics = [otelcol.processor.transform.add_job_label.input]
     logs    = [otelcol.exporter.otlphttp.loki.input, otelcol.exporter.otlp.aspire.input]
+  }
+}
+
+// Transform processor to add job label from service.name for Prometheus/Mimir compatibility
+otelcol.processor.transform "add_job_label" {
+  error_mode = "ignore"
+
+  metric_statements {
+    context = "resource"
+    statements = [
+      "set(attributes[\"job\"], attributes[\"service.name\"])",
+    ]
+  }
+
+  output {
+    metrics = [otelcol.exporter.otlphttp.mimir.input, otelcol.exporter.otlp.aspire.input]
   }
 }
 
