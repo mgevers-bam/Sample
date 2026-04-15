@@ -9,13 +9,13 @@ namespace Communications.Api.Controllers
         private readonly int[] _processingDelayRange = [190, 210];
 
         [HttpPost]
-        public async Task<IActionResult> Post()
+        public async Task<IActionResult> Post(CancellationToken cancellationToken)
         {
             var delay = new Random().Next(
                 _processingDelayRange[0],
                 _processingDelayRange[1]);
 
-            await Task.Delay(delay);
+            await Task.Delay(delay, cancellationToken);
             return Ok();
         }
     }

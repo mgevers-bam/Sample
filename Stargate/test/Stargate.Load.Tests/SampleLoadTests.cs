@@ -7,6 +7,7 @@ using NBomber.CSharp;
 using NBomber.Http.CSharp;
 using Newtonsoft.Json;
 using Stargate.Api.Controllers;
+using System.Diagnostics;
 using System.Text;
 
 namespace Stargate.Load.Tests;
@@ -24,10 +25,11 @@ public static class Program
         var host = builder.Build();
 
         var httpClientFactory = host.Services.GetRequiredService<IHttpClientFactory>();
+        using var httpClient = httpClientFactory.CreateClient();
 
-        var badScenario = CreateScenario(httpClientFactory, options, "AsyncDemo/Bad");
-        var betterScenario = CreateScenario(httpClientFactory, options, "AsyncDemo/Better");
-        var bestScenario = CreateScenario(httpClientFactory, options, "AsyncDemo/Best");
+        var badScenario = CreateScenario(httpClient, options, "AsyncDemo/Bad");
+        var betterScenario = CreateScenario(httpClient, options, "AsyncDemo/Better");
+        var bestScenario = CreateScenario(httpClient, options, "AsyncDemo/Best");
 
         NBomberRunner
             .RegisterScenarios(badScenario, betterScenario, bestScenario)
@@ -35,16 +37,24 @@ public static class Program
             .WithReportFormats(ReportFormat.Html, ReportFormat.Md)
             .Run();
 
-        Console.WriteLine("\nLoad test complete! Check the 'reports' folder for HTML and Markdown reports.");
+        Console.WriteLine("\nLoad test complete!");
+
+        var reportFile = Directory.GetFiles("reports", "*.html", SearchOption.AllDirectories)
+            .OrderByDescending(File.GetCreationTime)
+            .FirstOrDefault();
+
+        if (reportFile is not null)
+        {
+            Process.Start(new ProcessStartInfo(reportFile) { UseShellExecute = true });
+        }
     }
 
     private static ScenarioProps CreateScenario(
-        IHttpClientFactory httpClientFactory,
+        HttpClient httpClient,
         LoadTestOptions options,
         string endpoint)
     {
         var scenarioName = endpoint.Replace("/", "_");
-        using var httpClient = httpClientFactory.CreateClient();
 
         return Scenario.Create(scenarioName, async context =>
             {
