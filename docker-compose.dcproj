@@ -20,6 +20,8 @@
     <None Include="grafana-datasources.yaml" />
     <None Include="loki-config.yaml" />
     <None Include="mimir-config.yaml" />
+    <None Include="Stargate\test\Stargate.Load.Tests\SampleLoadTests.cs" />
+    <None Include="Stargate\test\Stargate.Load.Tests\Stargate.Load.Tests.csproj" />
     <None Include="tempo-config.yaml" />
   </ItemGroup>
 </Project>

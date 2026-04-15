@@ -93,6 +93,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{089F511B-47D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Communications.Api", "Communications\src\Communications.Api\Communications.Api.csproj", "{3190DF67-11C7-46EB-B6BF-4A892D915941}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stargate.Load.Tests", "Stargate\test\Stargate.Load.Tests\Stargate.Load.Tests.csproj", "{BD32CBFD-0AA5-A24E-483A-42680D889F98}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -227,6 +229,10 @@ Global
 		{3190DF67-11C7-46EB-B6BF-4A892D915941}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3190DF67-11C7-46EB-B6BF-4A892D915941}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3190DF67-11C7-46EB-B6BF-4A892D915941}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD32CBFD-0AA5-A24E-483A-42680D889F98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD32CBFD-0AA5-A24E-483A-42680D889F98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD32CBFD-0AA5-A24E-483A-42680D889F98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD32CBFD-0AA5-A24E-483A-42680D889F98}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -272,6 +278,7 @@ Global
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{089F511B-47D5-4196-BBBB-39024718A53D} = {CDA74E07-1092-4FA0-AD37-7E8017C831CE}
 		{3190DF67-11C7-46EB-B6BF-4A892D915941} = {089F511B-47D5-4196-BBBB-39024718A53D}
+		{BD32CBFD-0AA5-A24E-483A-42680D889F98} = {D31D34D3-E803-44C5-A0DB-039D933F3139}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {039ED028-B37A-497D-8233-849DE3AEC974}
