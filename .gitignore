@@ -392,3 +392,4 @@ deployContainerApps.ps1
 sqlserver/
 sqlite/
 esdata/
+postgres_data/

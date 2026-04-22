@@ -4,6 +4,16 @@ namespace Common.LanguageExtensions.Utilities.ResultExtensions;
 
 public static partial class ResultFunctionalExtensions
 {
+    public static Result TapError(this Result result, Action<Result> action)
+    {
+        if (!result.IsSuccess)
+        {
+            action(result);
+        }
+
+        return result;
+    }
+
     public static async Task<Result> TapError(this Task<Result> resultTask, Action<Result> action)
     {
         var result = await resultTask;

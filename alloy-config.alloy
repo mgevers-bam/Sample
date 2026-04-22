@@ -1,5 +1,5 @@
 // Grafana Alloy Configuration
-// Receives OTLP telemetry and routes to Tempo, Mimir, Loki, and Aspire Dashboard
+// Receives OTLP telemetry and routes to Tempo, Mimir, OpenSearch, and Aspire Dashboard
 
 // =============================================================================
 // OTLP Receivers
@@ -31,7 +31,7 @@ otelcol.processor.batch "default" {
   output {
     traces  = [otelcol.exporter.otlp.tempo.input, otelcol.exporter.otlp.aspire.input]
     metrics = [otelcol.processor.transform.add_job_label.input]
-    logs    = [otelcol.exporter.otlphttp.loki.input, otelcol.exporter.otlp.aspire.input]
+    logs    = [otelcol.exporter.otlp.opensearch.input, otelcol.exporter.otlp.aspire.input]
   }
 }
 
@@ -72,10 +72,13 @@ otelcol.exporter.otlphttp "mimir" {
   }
 }
 
-// Loki - Logs
-otelcol.exporter.otlphttp "loki" {
+// OpenSearch - Logs (via Data Prepper)
+otelcol.exporter.otlp "opensearch" {
   client {
-    endpoint = "http://loki:3100/otlp"
+    endpoint = "data-prepper:21891"
+    tls {
+      insecure = true
+    }
   }
 }
 

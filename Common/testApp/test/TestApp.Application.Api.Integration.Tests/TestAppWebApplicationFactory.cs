@@ -6,7 +6,6 @@ using Common.Testing.Web;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using TestApp.Core.CommandHandlers;
 using TestApp.Core.Domain;
 
 namespace TestApp.Application.Api.Integration.Tests;

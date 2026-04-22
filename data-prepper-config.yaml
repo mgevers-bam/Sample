@@ -1,0 +1,41 @@
+otel-logs-pipeline:
+  source:
+    otel_logs_source:
+      ssl: false
+  processor:
+    - otel_logs:
+  sink:
+    - opensearch:
+        hosts: ["https://opensearch:9200"]
+        username: "admin"
+        password: "Admin123!"
+        insecure: true
+        index_type: custom
+        index: "otel-logs-%{yyyy.MM.dd}"
+        template_type: index-template
+        template_content:
+          index_patterns: ["otel-logs-*"]
+          template:
+            settings:
+              number_of_shards: 1
+              number_of_replicas: 0
+            mappings:
+              properties:
+                "@timestamp":
+                  type: date
+                traceId:
+                  type: keyword
+                spanId:
+                  type: keyword
+                severityText:
+                  type: keyword
+                severityNumber:
+                  type: integer
+                body:
+                  type: text
+                serviceName:
+                  type: keyword
+                resource:
+                  type: object
+                attributes:
+                  type: object

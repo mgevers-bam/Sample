@@ -6,7 +6,8 @@
       "serviceActions": {
         "stargate.api": "StartDebugging",
         "stargate.messageprocessor": "StartDebugging",
-        "communications.api": "StartDebugging"
+        "communications.api": "StartDebugging",
+        "authentication.application.api": "StartDebugging"
       }
     }
   }

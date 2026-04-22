@@ -4,6 +4,16 @@ namespace Common.LanguageExtensions.Utilities.ResultExtensions;
 
 public static partial class ResultFunctionalExtensions
 {
+    public static Result Tap(this Result result, Action action)
+    {
+        if (result.IsSuccess)
+        {
+            action();
+        }
+
+        return result;
+    }
+
     public static Result<T> Tap<T>(this Result<T> result, Action<T> action)
     {
         if (result.IsSuccess)

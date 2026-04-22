@@ -4,24 +4,52 @@ services:
   sql-server:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sql-server
+    user: root
     ports:
       - "1433:1433"
     environment:
       - ACCEPT_EULA=y
       - SA_PASSWORD=Password123!!
+      - MSSQL_DATA_DIR=/var/opt/mssql/data
+      - MSSQL_LOG_DIR=/var/opt/mssql/log
+      - MSSQL_BACKUP_DIR=/var/opt/mssql/backup
     volumes:
-      - sqlserver-data:/var/opt/mssql
+      - ./sqlserver/data:/var/opt/mssql/data
+      - ./sqlserver/log:/var/opt/mssql/log
+      - ./sqlserver/secrets:/var/opt/mssql/secrets
+      - ./sqlserver/backup:/var/opt/mssql/backup
+
+  # Postgres
+  # postgres:
+  #   image: postgres:17.9-alpine
+  #   container_name: golf-app-postgres
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: golfapp
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - ./postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
   # Aspire Dashboard - .NET development dashboard
   aspire-dashboard:
-    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.2
     container_name: aspire-dashboard
     ports:
       - 18888:18888 # Aspire UI
-      ## - 4317:18889
+      - 18891:18891 # MCP Server
     environment:
       - CircuitOptions__DetailedErrors=true
       - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - Dashboard__Mcp__Enabled=true
+      - Dashboard__Mcp__EndpointUrl=http://0.0.0.0:18891
+      - Dashboard__Mcp__ExternalEndpointUrl=http://localhost:18891
 
   # Grafana Alloy - OpenTelemetry collector (Grafana's distribution)
   alloy:
@@ -36,7 +64,7 @@ services:
       - "12345:12345" # Alloy UI
     depends_on:
       - tempo
-      - loki
+      - data-prepper
       - mimir
       - aspire-dashboard
 
@@ -52,16 +80,48 @@ services:
       - "3200:3200"   # Tempo HTTP API
       - "9095:9095"   # Tempo gRPC
 
-  # Grafana Loki - log aggregation
-  loki:
-    image: grafana/loki:latest
-    container_name: loki
-    command: ["-config.file=/etc/loki/local-config.yaml"]
+  # OpenSearch Data Prepper - ingestion pipeline for OpenSearch
+  data-prepper:
+    image: opensearchproject/data-prepper:latest
+    container_name: data-prepper
     volumes:
-      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
-      - loki-data:/loki
+      - ./data-prepper-config.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml:ro
+      - ./data-prepper-settings.yaml:/usr/share/data-prepper/config/data-prepper-config.yaml:ro
     ports:
-      - "3100:3100"
+      - "21891:21891"   # OTLP gRPC
+      - "21892:21892"   # OTLP HTTP
+    depends_on:
+      - opensearch
+
+  # OpenSearch - log aggregation and search
+  opensearch:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Admin123!
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+
+  # OpenSearch Dashboards - visualization for OpenSearch
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: opensearch-dashboards
+    ports:
+      - "5601:5601"
+    environment:
+      - OPENSEARCH_HOSTS=["https://opensearch:9200"]
+    depends_on:
+      - opensearch
 
   # Grafana Mimir - scalable metrics backend
   mimir:
@@ -90,10 +150,11 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_INSTALL_PLUGINS=grafana-opensearch-datasource
     depends_on:
       - mimir
       - tempo
-      - loki
+      - opensearch
 
   # rabbitmq
   rabbitmq:
@@ -106,6 +167,23 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
+
+  authentication.application.api:
+    image: ${DOCKER_REGISTRY-}authenticationapplicationapi
+    container_name: authentication.api
+    build:
+      context: .
+      dockerfile: Authentication/src/Authentication.Application.Api/Dockerfile
+    depends_on:
+        - alloy
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_HTTP_PORTS: 5000
+      OTEL_TRACES_SAMPLER: "always_on"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_SERVICE_NAME: "authentication-api"
 
   stargate.api.1:
     image: ${DOCKER_REGISTRY-}stargateapi
@@ -120,7 +198,7 @@ services:
     ports:
       - "5001:5001"
     environment:
-      ASPNETCORE_URLS: http://+:5001
+      ASPNETCORE_HTTP_PORTS: 5001
       OTEL_TRACES_SAMPLER: "always_on"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
@@ -139,7 +217,7 @@ services:
     ports:
       - "5002:5002"
     environment:
-      ASPNETCORE_URLS: http://+:5002
+      ASPNETCORE_HTTP_PORTS: 5002
       OTEL_TRACES_SAMPLER: "always_on"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
@@ -172,15 +250,15 @@ services:
     ports:
       - "5003:5003"
     environment:
-      ASPNETCORE_URLS: http://+:5003
+      ASPNETCORE_HTTP_PORTS: 5003
       OTEL_TRACES_SAMPLER: "always_on"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
       OTEL_SERVICE_NAME: "communications-api"
 
 volumes:
-  sqlserver-data:
-  loki-data:
+  opensearch-data:
   tempo-data:
   mimir-data:
   grafana-data:
+

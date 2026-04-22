@@ -14,18 +14,24 @@ datasources:
         - name: traceID
           datasourceUid: tempo
 
-  - name: Loki
-    uid: loki
-    type: loki
+  - name: OpenSearch
+    uid: opensearch
+    type: grafana-opensearch-datasource
     access: proxy
-    url: http://loki:3100
+    url: https://opensearch:9200
     editable: true
     jsonData:
-      derivedFields:
-        - name: TraceID
-          datasourceUid: tempo
-          matcherRegex: '"traceId":"([a-f0-9]+)"'
-          url: '$${__value.raw}'
+      database: "otel-logs-*"
+      flavor: opensearch
+      version: 2.18.0
+      tlsSkipVerify: true
+      timeField: "@timestamp"
+      logMessageField: body
+      logLevelField: severityText
+    secureJsonData:
+      basicAuthPassword: Admin123!
+    basicAuth: true
+    basicAuthUser: admin
 
   - name: Tempo
     uid: tempo
@@ -35,7 +41,7 @@ datasources:
     editable: true
     jsonData:
       tracesToLogsV2:
-        datasourceUid: loki
+        datasourceUid: opensearch
         filterByTraceID: true
         filterBySpanID: true
       tracesToMetrics:
@@ -44,5 +50,3 @@ datasources:
         datasourceUid: mimir
       nodeGraph:
         enabled: true
-      lokiSearch:
-        datasourceUid: loki

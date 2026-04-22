@@ -16,6 +16,18 @@ public static partial class ResultFunctionalExtensions
         }
     }
 
+    public static async Task<Result<T>> Map<T>(this Result result, Func<Task<Result<T>>> action)
+    {
+        if (result.IsSuccess)
+        {
+            return await action();
+        }
+        else
+        {
+            return result.AsTypedError<T>();
+        }
+    }
+
     public static async Task<Result<T>> Map<T>(this Task<Result> resultTask, Func<Result<T>> action)
     {
         var result = await resultTask;

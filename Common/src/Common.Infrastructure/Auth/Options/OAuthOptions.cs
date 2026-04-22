@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructure.Auth.Token;
+﻿namespace Common.Infrastructure.Auth.Options;
 
 public class OAuthOptions
 {

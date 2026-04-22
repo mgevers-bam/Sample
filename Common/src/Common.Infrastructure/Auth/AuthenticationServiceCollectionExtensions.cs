@@ -1,5 +1,5 @@
 ﻿using Common.Infrastructure.Auth.ApiKey;
-using Common.Infrastructure.Auth.Token;
+using Common.Infrastructure.Auth.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
