@@ -1,3 +1,4 @@
+using Authentication.Application.Api.Handlers;
 using Authentication.Core.Domain;
 using Authentication.Infrastructure.Persistence;
 using Authentication.Infrastructure.Persistence.Options;
@@ -11,7 +12,16 @@ public static class OpenIddictConfiguration
     public static void ConfigureOpenIddict(WebApplicationBuilder builder, DatabaseOptions dbOptions)
     {
         // Register ASP.NET Core Identity
-        builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+        builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            {
+                // Configure password requirements
+                options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 6;
+                options.Password.RequiredUniqueChars = 1;
+            })
             .AddEntityFrameworkStores<AuthenticationDbContext>()
             .AddDefaultTokenProviders();
 
@@ -38,6 +48,9 @@ public static class OpenIddictConfiguration
 
                 // Enable the refresh token flow
                 options.AllowRefreshTokenFlow();
+
+                // Register custom handler to populate scopes from database
+                options.AddEventHandler(PopulateScopesFromDatabaseHandler.Descriptor);
 
                 // Register the signing and encryption credentials
                 // For development, use development certificates

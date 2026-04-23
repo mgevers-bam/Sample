@@ -45,7 +45,7 @@ public class TokenService(
             signingCredentials: credentials);
     }
 
-    public async Task<string> GenerateRefreshToken(ApplicationUser user)
+    public async Task<string> GenerateRefreshToken(ApplicationUser user, CancellationToken cancellationToken = default)
     {
         var refreshToken = new RefreshToken
         {
@@ -55,12 +55,12 @@ public class TokenService(
         };
 
         dbContext.RefreshTokens.Add(refreshToken);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return refreshToken.Token;
     }
 
-    public async Task<JwtSecurityToken?> ValidateAccessToken(string token)
+    public async Task<JwtSecurityToken?> ValidateAccessToken(string token, CancellationToken cancellationToken = default)
     {
         var handler = new JwtSecurityTokenHandler();
         var signingKey = options.SigningKey
@@ -89,7 +89,7 @@ public class TokenService(
             var jti = jwtToken.Claims.FirstOrDefault(c => c.Type == "jti")?.Value;
             if (!string.IsNullOrEmpty(jti))
             {
-                var isRevoked = await dbContext.RevokedTokens.AnyAsync(rt => rt.JwtTokenId == jti);
+                var isRevoked = await dbContext.RevokedTokens.AnyAsync(rt => rt.JwtTokenId == jti, cancellationToken);
                 if (isRevoked)
                     return null;
             }
@@ -102,19 +102,22 @@ public class TokenService(
         }
     }
 
-    public async Task RevokeRefreshToken(string token, string? reason = null)
+    public async Task RevokeRefreshToken(string token, string? reason = null, CancellationToken cancellationToken = default)
     {
-        var refreshToken = await dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == token);
+        var refreshToken = await dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == token, cancellationToken);
         if (refreshToken != null)
         {
             refreshToken.RevokedAt = DateTime.UtcNow;
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 
-    public async Task<RefreshToken?> GetValidRefreshToken(string token)
+    public async Task<RefreshToken?> GetValidRefreshToken(string token, CancellationToken cancellationToken = default)
     {
-        return await dbContext.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == token && rt.IsValid);
+        var foundToken = await dbContext.RefreshTokens
+            .Where(rt => rt.Token == token)
+            .ToListAsync();
+
+        return foundToken.FirstOrDefault(rt => rt.IsValid);
     }
 }

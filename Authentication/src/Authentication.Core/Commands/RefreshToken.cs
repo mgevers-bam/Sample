@@ -29,7 +29,7 @@ public class RefreshTokenCommandHandler(
 {
     public async Task<Result<RefreshTokenResponse>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        var refreshToken = await tokenService.GetValidRefreshToken(request.RefreshToken);
+        var refreshToken = await tokenService.GetValidRefreshToken(request.RefreshToken, cancellationToken);
         if (refreshToken == null)
         {
             logger.LogWarning("Invalid or expired refresh token attempted");

@@ -6,9 +6,9 @@ namespace Authentication.Core.Contracts;
 public interface ITokenService
 {
     Task<JwtSecurityToken> GenerateAccessToken(ApplicationUser user);
-    Task<string> GenerateRefreshToken(ApplicationUser user);
-    Task<JwtSecurityToken?> ValidateAccessToken(string token);
-    Task RevokeRefreshToken(string token, string? reason = null);
-    Task<RefreshToken?> GetValidRefreshToken(string token);
+    Task<string> GenerateRefreshToken(ApplicationUser user, CancellationToken cancellationToken = default);
+    Task<JwtSecurityToken?> ValidateAccessToken(string token, CancellationToken cancellationToken = default);
+    Task RevokeRefreshToken(string token, string? reason = null, CancellationToken cancellationToken = default);
+    Task<RefreshToken?> GetValidRefreshToken(string token, CancellationToken cancellationToken = default);
 }
 

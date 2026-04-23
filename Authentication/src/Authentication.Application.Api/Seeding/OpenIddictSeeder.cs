@@ -49,8 +49,8 @@ public static class OpenIddictSeeder
             });
         }
 
-        // Custom API scope
-        if (await scopeManager.FindByNameAsync("stargate.api") is null)
+        var stargateScope = await scopeManager.FindByNameAsync("stargate.api");
+        if (stargateScope is null)
         {
             await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
             {

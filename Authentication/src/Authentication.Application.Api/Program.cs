@@ -1,12 +1,14 @@
 using Authentication.Application.Api.Seeding;
+using Authentication.Core.Commands;
 using Authentication.Core.Contracts;
 using Authentication.Infrastructure;
 using Authentication.Infrastructure.Persistence;
 using Authentication.Infrastructure.Persistence.Options;
 using Common.Infrastructure.Auth.Options;
 using Common.Infrastructure.OpenTelemetry;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 
 namespace Authentication.Application.Api;
 
@@ -49,9 +51,17 @@ public class Program
         builder.Services
             .AddOpenApi()
             .AddPersistence(dbOptions)
-            .AddMediatR(config => config.RegisterServicesFromAssembly(typeof(Program).Assembly))
+            .AddMediatR(config =>
+            {
+                Assembly[] assemblies = [
+                    typeof(Program).Assembly,
+                    typeof(LoginCommand).Assembly,
+                ];
+                config.RegisterServicesFromAssemblies(assemblies);
+            })
             .AddScoped<ITokenService, TokenService>()
-            .AddSingleton(jwtOptions);
+            .AddSingleton(jwtOptions)
+            .AddTransient<JwtSecurityTokenHandler>();
 
         OpenIddictConfiguration.ConfigureOpenIddict(builder, dbOptions);
     }
@@ -88,5 +98,8 @@ public class Program
 
         // Seed OpenIddict configuration data
         await OpenIddictSeeder.SeedAsync(scope.ServiceProvider);
+
+        // Seed test user
+        await TestUserSeeder.SeedAsync(scope.ServiceProvider);
     }
 }
