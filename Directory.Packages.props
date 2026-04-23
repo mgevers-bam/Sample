@@ -6,11 +6,10 @@
     <PackageVersion Include="Ardalis.Result" Version="10.1.0" />
     <PackageVersion Include="Ardalis.Result.AspNetCore" Version="10.1.0" />
     <PackageVersion Include="coverlet.collector" Version="8.0.1" />
-    <PackageVersion Include="CSharpFunctionalExtensions" Version="3.7.0" />
-	<PackageVersion Include="Duende.IdentityServer" Version="7.4.7" />
-	<PackageVersion Include="Duende.IdentityServer.AspNetIdentity" Version="7.4.7" />
-	<PackageVersion Include="Duende.IdentityServer.EntityFramework" Version="7.4.7" />
-    <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.3.4" />
+	<PackageVersion Include="CSharpFunctionalExtensions" Version="3.7.0" />
+	<PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.3.4" />
+	<PackageVersion Include="OpenIddict.AspNetCore" Version="6.3.0" />
+	<PackageVersion Include="OpenIddict.EntityFrameworkCore" Version="6.3.0" />
     <PackageVersion Include="MassTransit" Version="8.5.8" />
     <PackageVersion Include="MassTransit.EntityFrameworkCore" Version="8.5.8" />
     <PackageVersion Include="MassTransit.Newtonsoft" Version="8.5.8" />

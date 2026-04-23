@@ -5,7 +5,6 @@ using Authentication.Infrastructure.Persistence;
 using Authentication.Infrastructure.Persistence.Options;
 using Common.Infrastructure.Auth.Options;
 using Common.Infrastructure.OpenTelemetry;
-using Duende.IdentityServer.EntityFramework.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
@@ -54,7 +53,7 @@ public class Program
             .AddScoped<ITokenService, TokenService>()
             .AddSingleton(jwtOptions);
 
-        DuendeConfiguration.ConfigureIdentityStore(builder, dbOptions);
+        OpenIddictConfiguration.ConfigureOpenIddict(builder, dbOptions);
     }
 
     private static void ConfigureApplication(WebApplication app)
@@ -68,8 +67,6 @@ public class Program
                 options.SwaggerEndpoint("/openapi/v1.json", "Authentication API V1");
             });
         }
-
-        app.UseIdentityServer();
 
         app
             .UseHttpsRedirection()            
@@ -89,19 +86,7 @@ public class Program
             await db.Database.EnsureCreatedAsync();
         }
 
-        var persistedGrantDb = scope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>();
-        if (!await persistedGrantDb.Database.CanConnectAsync())
-        {
-            await persistedGrantDb.Database.EnsureCreatedAsync();
-        }
-
-        var configDb = scope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
-        if (!await configDb.Database.CanConnectAsync())
-        {
-            await configDb.Database.EnsureCreatedAsync();
-        }
-
-        // Seed IdentityServer configuration data
-        await IdentityServerSeeder.SeedAsync(configDb);
+        // Seed OpenIddict configuration data
+        await OpenIddictSeeder.SeedAsync(scope.ServiceProvider);
     }
 }

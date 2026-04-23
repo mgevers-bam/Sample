@@ -11,7 +11,7 @@ public static class PeristenceServiceCollectionExtensions
         return services
             .AddDbContext<AuthenticationDbContext>(dbOptions =>
             {
-                dbOptions.UseSqlServer(options.GolfAuthConnectionString, npgOptions =>
+                dbOptions.UseSqlServer(options.AuthConnectionString, npgOptions =>
                 {
                     npgOptions
                         .MigrationsAssembly(typeof(AuthenticationDbContext).Assembly.GetName().Name)
