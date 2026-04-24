@@ -107,6 +107,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Authentication.Infrastructu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Authentication.Application.Api", "Authentication\src\Authentication.Application.Api\Authentication.Application.Api.csproj", "{2B6A59A8-C90C-5E47-99CF-649F7731E45C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Authentication.Core.Boundary", "Authentication\src\Authentication.Core.Boundary\Authentication.Core.Boundary.csproj", "{791CBD19-89A7-408C-BAAB-257F785A18CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -261,6 +263,10 @@ Global
 		{2B6A59A8-C90C-5E47-99CF-649F7731E45C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B6A59A8-C90C-5E47-99CF-649F7731E45C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2B6A59A8-C90C-5E47-99CF-649F7731E45C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{791CBD19-89A7-408C-BAAB-257F785A18CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{791CBD19-89A7-408C-BAAB-257F785A18CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{791CBD19-89A7-408C-BAAB-257F785A18CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{791CBD19-89A7-408C-BAAB-257F785A18CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -312,6 +318,7 @@ Global
 		{05A44206-E0B2-DBDF-D43D-F3C39AF96662} = {5C0D8D8D-6F54-4F6E-8495-06200A3729F3}
 		{B40F8BC0-AA80-E03F-BAA5-4A3FDC0F8B38} = {5C0D8D8D-6F54-4F6E-8495-06200A3729F3}
 		{2B6A59A8-C90C-5E47-99CF-649F7731E45C} = {5C0D8D8D-6F54-4F6E-8495-06200A3729F3}
+		{791CBD19-89A7-408C-BAAB-257F785A18CA} = {5C0D8D8D-6F54-4F6E-8495-06200A3729F3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {039ED028-B37A-497D-8233-849DE3AEC974}

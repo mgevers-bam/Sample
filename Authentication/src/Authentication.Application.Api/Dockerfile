@@ -18,6 +18,7 @@ COPY ["Common/src/Common.Infrastructure/Common.Infrastructure.csproj", "Common/s
 COPY ["Common/src/Common.LanguageExtensions/Common.LanguageExtensions.csproj", "Common/src/Common.LanguageExtensions/"]
 COPY ["Authentication/src/Authentication.Core.Domain/Authentication.Core.Domain.csproj", "Authentication/src/Authentication.Core.Domain/"]
 COPY ["Authentication/src/Authentication.Core/Authentication.Core.csproj", "Authentication/src/Authentication.Core/"]
+COPY ["Authentication/src/Authentication.Core.Boundary/Authentication.Core.Boundary.csproj", "Authentication/src/Authentication.Core.Boundary/"]
 RUN dotnet restore "./Authentication/src/Authentication.Application.Api/Authentication.Application.Api.csproj"
 COPY . .
 WORKDIR "/src/Authentication/src/Authentication.Application.Api"

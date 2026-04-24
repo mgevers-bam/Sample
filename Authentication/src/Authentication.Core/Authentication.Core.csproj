@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\src\Common.LanguageExtensions\Common.LanguageExtensions.csproj" />
+    <ProjectReference Include="..\Authentication.Core.Boundary\Authentication.Core.Boundary.csproj" />
     <ProjectReference Include="..\Authentication.Core.Domain\Authentication.Core.Domain.csproj" />
   </ItemGroup>
 
