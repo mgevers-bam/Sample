@@ -2,7 +2,7 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server;
 using static OpenIddict.Server.OpenIddictServerEvents;
 
-namespace Authentication.Application.Api.Handlers;
+namespace Authentication.Application.Api.OpenIdHandlers;
 
 public class PopulateScopesFromDatabaseHandler : IOpenIddictServerHandler<HandleConfigurationRequestContext>
 {

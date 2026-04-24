@@ -6,8 +6,11 @@ namespace Authentication.Infrastructure.Persistence;
 
 public static class PeristenceServiceCollectionExtensions
 {
-    public static IServiceCollection AddPersistence(this IServiceCollection services, DatabaseOptions options)
+    public static IServiceCollection AddPersistence(this IServiceCollection services, Action<DatabaseOptions> configure)
     {
+        var options = new DatabaseOptions();
+        configure(options);
+
         return services
             .AddDbContext<AuthenticationDbContext>(dbOptions =>
             {

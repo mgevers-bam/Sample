@@ -1,5 +1,6 @@
 using Authentication.Core.Contracts;
 using Authentication.Core.Domain;
+using Common.Infrastructure.Auth.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -20,7 +21,7 @@ public class OpenIddictTokenService(
     IOpenIddictScopeManager scopeManager,
     IOpenIddictApplicationManager applicationManager,
     IOptionsMonitor<OpenIddictServerOptions> openIddictServerOptions,
-    TokenServiceOptions options) : ITokenService
+    JwtOptions options) : ITokenService
 {
     public async Task<TokenResponse> GenerateTokensAsync(
         ApplicationUser user,
@@ -213,25 +214,4 @@ public class OpenIddictTokenService(
             return null;
         }
     }
-}
-
-/// <summary>
-/// Options for the token service.
-/// </summary>
-public class TokenServiceOptions
-{
-    /// <summary>
-    /// The token issuer.
-    /// </summary>
-    public string Issuer { get; set; } = "http://authentication.api:5000/";
-
-    /// <summary>
-    /// Access token lifetime.
-    /// </summary>
-    public TimeSpan AccessTokenLifetime { get; set; } = TimeSpan.FromHours(1);
-
-    /// <summary>
-    /// Refresh token lifetime.
-    /// </summary>
-    public TimeSpan RefreshTokenLifetime { get; set; } = TimeSpan.FromDays(7);
 }

@@ -1,9 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Authentication.Core.Domain;
 
-[Table("RefreshTokens")]
 public class RefreshToken
 {
     [Key]
@@ -12,7 +10,6 @@ public class RefreshToken
     [Required]
     public string UserId { get; set; } = string.Empty;
 
-    [ForeignKey(nameof(UserId))]
     public ApplicationUser User { get; set; } = null!;
 
     [Required]
@@ -33,7 +30,6 @@ public class RefreshToken
     public bool IsValid => !IsRevoked && !IsExpired;
 }
 
-[Table("RevokedTokens")]
 public class RevokedToken
 {
     [Key]

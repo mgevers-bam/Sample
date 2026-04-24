@@ -1,7 +1,7 @@
-using Authentication.Application.Api.Handlers;
+using Authentication.Application.Api.OpenIdHandlers;
 using Authentication.Core.Domain;
 using Authentication.Infrastructure.Persistence;
-using Authentication.Infrastructure.Persistence.Options;
+using Common.Infrastructure.Auth.Options;
 using Microsoft.AspNetCore.Identity;
 using OpenIddict.Validation.AspNetCore;
 
@@ -9,8 +9,13 @@ namespace Authentication.Application.Api;
 
 public static class OpenIddictConfiguration
 {
-    public static void ConfigureOpenIddict(WebApplicationBuilder builder, DatabaseOptions dbOptions)
+    public static void ConfigureOpenIddict(
+        WebApplicationBuilder builder,
+        Action<JwtOptions> configure)
     {
+        var jwtOptions = new JwtOptions();
+        configure(jwtOptions);
+
         // Register ASP.NET Core Identity
         builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
@@ -42,7 +47,7 @@ public static class OpenIddictConfiguration
                     .SetIntrospectionEndpointUris("/connect/introspect")
                     .SetEndSessionEndpointUris("/connect/logout")
                     .SetJsonWebKeySetEndpointUris("/.well-known/jwks")
-                    .SetIssuer(new Uri("http://authentication.api:5000/"));
+                    .SetIssuer(new Uri(jwtOptions.Issuer));
 
                 // Enable the authorization code flow with PKCE
                 options.AllowAuthorizationCodeFlow()

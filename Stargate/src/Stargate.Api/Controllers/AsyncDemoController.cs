@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Stargate.Core.Commands;
 
@@ -27,6 +28,7 @@ public class AsyncDemoController(
         return Ok();
     }
 
+    [Authorize]
     [HttpPost("Best")]
     public async Task<IActionResult> BestAsync(AsyncDemoRequest request, CancellationToken cancellationToken)
     {

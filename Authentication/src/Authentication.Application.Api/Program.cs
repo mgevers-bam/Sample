@@ -1,14 +1,12 @@
-using Authentication.Application.Api.Seeding;
+using Authentication.Application.Api.OnStartupHandlers;
 using Authentication.Core.Commands;
-using Authentication.Core.Contracts;
 using Authentication.Infrastructure;
 using Authentication.Infrastructure.Persistence;
 using Authentication.Infrastructure.Persistence.Options;
+using Common.Infrastructure.Auth.Options;
 using Common.Infrastructure.OpenTelemetry;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System.Reflection;
-using System.Security.Cryptography;
 
 namespace Authentication.Application.Api;
 
@@ -20,19 +18,16 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         ConfigureServices(builder);
+        builder.Services.AddHostedService<ServiceStartup>();
 
         var app = builder.Build();
         ConfigureApplication(app);
 
-        await RunMigrations(app.Services);
         await app.RunAsync();
     }
 
     private static void ConfigureServices(WebApplicationBuilder builder)
     {
-        var dbOptions = builder.Configuration.GetSection(nameof(DatabaseOptions)).Get<DatabaseOptions>()
-            ?? throw new InvalidOperationException($"{nameof(DatabaseOptions)} is missing.");
-
         builder.UseSerilog("authentication-api", logToConsole: true, logToOtel: true);
 
         builder.Services
@@ -49,7 +44,10 @@ public class Program
 
         builder.Services
             .AddOpenApi()
-            .AddPersistence(dbOptions)
+            .AddPersistence(options =>
+            {
+                builder.Configuration.GetSection(nameof(DatabaseOptions)).Bind(options);
+            })
             .AddMediatR(config =>
             {
                 Assembly[] assemblies = [
@@ -59,10 +57,15 @@ public class Program
                 config.RegisterServicesFromAssemblies(assemblies);
             });
 
-        // Register token service
-        builder.Services.AddTokenService(builder.Configuration);
+        builder.Services.AddTokenService(options =>
+        {
+            builder.Configuration.GetSection(nameof(JwtOptions)).Bind(options);
+        });
 
-        OpenIddictConfiguration.ConfigureOpenIddict(builder, dbOptions);
+        OpenIddictConfiguration.ConfigureOpenIddict(builder, options =>
+        {
+            builder.Configuration.GetSection(nameof(JwtOptions)).Bind(options);
+        });
     }
 
     private static void ConfigureApplication(WebApplication app)
@@ -83,22 +86,5 @@ public class Program
             .UseAuthorization();
 
         app.MapControllers();
-    }
-
-    private static async Task RunMigrations(IServiceProvider serviceProvider)
-    {
-        using var scope = serviceProvider.CreateScope();
-
-        var db = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
-        if (!await db.Database.CanConnectAsync())
-        {
-            await db.Database.EnsureCreatedAsync();
-        }
-
-        // Seed OpenIddict configuration data
-        await OpenIddictSeeder.SeedAsync(scope.ServiceProvider);
-
-        // Seed test user
-        await TestUserSeeder.SeedAsync(scope.ServiceProvider);
     }
 }

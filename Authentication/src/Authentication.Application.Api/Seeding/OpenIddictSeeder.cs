@@ -1,70 +1,48 @@
 using OpenIddict.Abstractions;
+using OpenIddict.Core;
+using OpenIddict.EntityFrameworkCore.Models;
 
 namespace Authentication.Application.Api.Seeding;
 
 public static class OpenIddictSeeder
 {
-    public static async Task SeedAsync(IServiceProvider serviceProvider)
+    public static async Task SeedAsync(
+        OpenIddictScopeManager<OpenIddictEntityFrameworkCoreScope> scopeManager,
+        OpenIddictApplicationManager<OpenIddictEntityFrameworkCoreApplication> applicationManager,
+        CancellationToken cancellationToken)
     {
-        var scopeManager = serviceProvider.GetRequiredService<IOpenIddictScopeManager>();
-        var applicationManager = serviceProvider.GetRequiredService<IOpenIddictApplicationManager>();
-
-        // Seed standard OpenID Connect scopes
-        await SeedScopesAsync(scopeManager);
-
-        // Seed client applications
-        await SeedApplicationsAsync(applicationManager);
+        await SeedScopesAsync(scopeManager, cancellationToken);
+        await SeedApplicationsAsync(applicationManager, cancellationToken);
     }
 
-    private static async Task SeedScopesAsync(IOpenIddictScopeManager scopeManager)
+    private static async Task SeedScopesAsync(
+        OpenIddictScopeManager<OpenIddictEntityFrameworkCoreScope> scopeManager,
+        CancellationToken cancellationToken)
     {
-        // Standard OpenID Connect scopes
-        if (await scopeManager.FindByNameAsync("openid") is null)
+        // Define scopes to seed
+        var scopesToSeed = new List<OpenIddictScopeDescriptor>
         {
-            await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
-            {
-                Name = "openid",
-                DisplayName = "OpenID",
-                Description = "Grants access to the OpenID Connect identity token"
-            });
-        }
+            new() { Name = "openid", DisplayName = "OpenID", Description = "Grants access to the OpenID Connect identity token" },
+            new() { Name = "profile", DisplayName = "Profile", Description = "Grants access to profile information (name, etc.)" },
+            new() { Name = "email", DisplayName = "Email", Description = "Grants access to email address" },
+            new() { Name = "stargate.api", DisplayName = "Stargate App API", Description = "Grants access to the Stargate App API", Resources = { "stargate.api" } }
+        };
 
-        if (await scopeManager.FindByNameAsync("profile") is null)
+        // Create only the scopes that don't exist
+        foreach (var descriptor in scopesToSeed)
         {
-            await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
+            if (await scopeManager.FindByNameAsync(descriptor.Name!, cancellationToken) is null)
             {
-                Name = "profile",
-                DisplayName = "Profile",
-                Description = "Grants access to profile information (name, etc.)"
-            });
-        }
-
-        if (await scopeManager.FindByNameAsync("email") is null)
-        {
-            await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
-            {
-                Name = "email",
-                DisplayName = "Email",
-                Description = "Grants access to email address"
-            });
-        }
-
-        var stargateScope = await scopeManager.FindByNameAsync("stargate.api");
-        if (stargateScope is null)
-        {
-            await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
-            {
-                Name = "stargate.api",
-                DisplayName = "Stargate App API",
-                Description = "Grants access to the Stargate App API",
-                Resources = { "stargate.api" }
-            });
+                await scopeManager.CreateAsync(descriptor, cancellationToken);
+            }
         }
     }
 
-    private static async Task SeedApplicationsAsync(IOpenIddictApplicationManager applicationManager)
+    private static async Task SeedApplicationsAsync(
+        OpenIddictApplicationManager<OpenIddictEntityFrameworkCoreApplication> applicationManager,
+        CancellationToken cancellationToken)
     {
-        if (await applicationManager.FindByClientIdAsync("stargate-app-client") is null)
+        if (await applicationManager.FindByClientIdAsync("stargate-app-client", cancellationToken) is null)
         {
             await applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
             {
@@ -91,11 +69,11 @@ public static class OpenIddictSeeder
                 {
                     OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
                 }
-            });
+            }, cancellationToken);
         }
 
         // Add a public client for password flow (useful for testing and simple API clients)
-        if (await applicationManager.FindByClientIdAsync("stargate-api-client") is null)
+        if (await applicationManager.FindByClientIdAsync("stargate-api-client", cancellationToken) is null)
         {
             await applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
             {
@@ -113,7 +91,7 @@ public static class OpenIddictSeeder
                     OpenIddictConstants.Permissions.Scopes.Profile,
                     OpenIddictConstants.Permissions.Prefixes.Scope + "stargate.api"
                 }
-            });
+            }, cancellationToken);
         }
     }
 }

@@ -1,19 +1,15 @@
 using Authentication.Core.Contracts;
-using Microsoft.Extensions.Configuration;
+using Common.Infrastructure.Auth.Options;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Authentication.Infrastructure;
 
 public static class TokenServiceExtensions
 {
-    public static IServiceCollection AddTokenService(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddTokenService(this IServiceCollection services, Action<JwtOptions> configure)
     {
-        var options = new TokenServiceOptions
-        {
-            Issuer = configuration["Auth:Issuer"] ?? "http://authentication.api:5000/",
-            AccessTokenLifetime = TimeSpan.FromHours(1),
-            RefreshTokenLifetime = TimeSpan.FromDays(7)
-        };
+        var options = new JwtOptions();
+        configure(options);
 
         services.AddSingleton(options);
         services.AddScoped<ITokenService, OpenIddictTokenService>();
