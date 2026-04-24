@@ -26,7 +26,7 @@ public class AuthController(IMediator mediator) : ControllerBase
         {
             UserName = request.UserName,
             Password = request.Password,
-            Scopes = request.Scopes ?? ["openid", "profile", "email", "stargate.api"]
+            Scopes = request.Scopes ?? ["openid", "profile", "email"]
         }, cancellationToken);
 
         IConvertToActionResult actionResult = result.ToActionResult(this);
