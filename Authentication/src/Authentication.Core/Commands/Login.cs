@@ -11,7 +11,7 @@ public class LoginCommand : IRequest<Result<TokenResponse>>
 {
     public string UserName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
-    public IEnumerable<string> Scopes { get; set; } = [];
+    public ICollection<string> Scopes { get; set; } = [];
 }
 
 public class LoginCommandHandler(

@@ -25,7 +25,7 @@ public class OpenIddictTokenService(
 {
     public async Task<TokenResponse> GenerateTokensAsync(
         ApplicationUser user,
-        IEnumerable<string> scopes,
+        ICollection<string> scopes,
         CancellationToken cancellationToken = default)
     {
         var claims = await BuildUserClaims(user, scopes, cancellationToken);
@@ -34,7 +34,7 @@ public class OpenIddictTokenService(
 
     public async Task<TokenResponse> GenerateClientTokensAsync(
         string clientId,
-        IEnumerable<string> scopes,
+        ICollection<string> scopes,
         CancellationToken cancellationToken = default)
     {
         var application = await applicationManager.FindByClientIdAsync(clientId, cancellationToken);
@@ -73,7 +73,7 @@ public class OpenIddictTokenService(
 
     private async Task<List<Claim>> BuildUserClaims(
         ApplicationUser user,
-        IEnumerable<string> scopes,
+        ICollection<string> scopes,
         CancellationToken cancellationToken)
     {
         var claims = new List<Claim>
@@ -95,13 +95,16 @@ public class OpenIddictTokenService(
         var resources = await scopeManager.ListResourcesAsync(scopesArray, cancellationToken).ToListAsync(cancellationToken);
         claims.AddRange(resources.Select(resource => new Claim("aud", resource)));
 
+        var standaloneClaims = await userManager.GetClaimsAsync(user);
+        claims.AddRange(standaloneClaims);
+
         return claims;
     }
 
     private async Task<List<Claim>> BuildClientClaims(
         string clientId,
         string? displayName,
-        IEnumerable<string> scopes,
+        ICollection<string> scopes,
         CancellationToken cancellationToken)
     {
         var claims = new List<Claim>

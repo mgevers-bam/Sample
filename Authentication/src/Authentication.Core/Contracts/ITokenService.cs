@@ -12,7 +12,7 @@ public interface ITokenService
     /// </summary>
     Task<TokenResponse> GenerateTokensAsync(
         ApplicationUser user,
-        IEnumerable<string> scopes,
+        ICollection<string> scopes,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -20,7 +20,7 @@ public interface ITokenService
     /// </summary>
     Task<TokenResponse> GenerateClientTokensAsync(
         string clientId,
-        IEnumerable<string> scopes,
+        ICollection<string> scopes,
         CancellationToken cancellationToken = default);
 
     /// <summary>

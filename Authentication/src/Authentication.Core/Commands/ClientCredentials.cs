@@ -10,7 +10,7 @@ public class ClientCredentialsCommand : IRequest<Result<TokenResponse>>
 {
     public string ClientId { get; set; } = string.Empty;
     public string? ClientSecret { get; set; }
-    public IEnumerable<string> Scopes { get; set; } = [];
+    public ICollection<string> Scopes { get; set; } = [];
 }
 
 public class ClientCredentialsCommandHandler(
