@@ -6,7 +6,10 @@ namespace Stargate.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AsyncDemoController(IMediator mediator) : ControllerBase
+public class AsyncDemoController(
+    IMediator mediator,
+    ILogger<AsyncDemoController> logger)
+    : ControllerBase
 {
     [HttpPost("Bad")]
     public async Task<IActionResult> BadAsync(AsyncDemoRequest request, CancellationToken cancellationToken)
@@ -36,4 +39,10 @@ public class AsyncDemoController(IMediator mediator) : ControllerBase
 public class AsyncDemoRequest
 {
     public int RequestCount { get; set; } = 10;
+}
+
+public class ClaimViewModel
+{
+    public string Type { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
 }

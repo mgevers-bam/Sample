@@ -4,7 +4,9 @@ using Common.Infrastructure.OpenTelemetry;
 using Common.Infrastructure.OpenTelemetry.Enrichers;
 using Common.Infrastructure.ServiceBus.MassTransit;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.OpenApi;
 using Newtonsoft.Json;
 using Serilog;
 using Stargate.Api.EventHandlers;
@@ -19,9 +21,7 @@ namespace Stargate.Api;
 
 public partial class Program
 {
-    protected Program()
-    {
-    }
+    protected Program() { }
 
     public static async Task Main(string[] args)
     {
@@ -93,7 +93,12 @@ public partial class Program
         });
 
         services.AddSignalR();
-        services.AddJwtAuthentication("fake-domain", "fake-audience");
+
+        // Use OpenIddict OIDC/JWKS-based authentication (RS256)
+        services.AddJwtAuthentication(
+            authorityUrl: configuration["Auth:Authority"] ?? "http://authentication.api:5000",
+            issuer: configuration["Auth:Issuer"] ?? "http://authentication.api:5000/",
+            audience: configuration["Auth:Audience"] ?? "stargate.api");
 
         services.AddHttpClient();
     }

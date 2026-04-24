@@ -1,14 +1,32 @@
-﻿using Authentication.Core.Domain;
-using System.IdentityModel.Tokens.Jwt;
+using Authentication.Core.Domain;
 
 namespace Authentication.Core.Contracts;
 
+/// <summary>
+/// Service for generating authentication tokens.
+/// </summary>
 public interface ITokenService
 {
-    Task<JwtSecurityToken> GenerateAccessToken(ApplicationUser user);
-    Task<string> GenerateRefreshToken(ApplicationUser user, CancellationToken cancellationToken = default);
-    Task<JwtSecurityToken?> ValidateAccessToken(string token, CancellationToken cancellationToken = default);
-    Task RevokeRefreshToken(string token, string? reason = null, CancellationToken cancellationToken = default);
-    Task<RefreshToken?> GetValidRefreshToken(string token, CancellationToken cancellationToken = default);
-}
+    /// <summary>
+    /// Generates access and refresh tokens for a user.
+    /// </summary>
+    Task<TokenResponse> GenerateTokensAsync(
+        ApplicationUser user,
+        IEnumerable<string> scopes,
+        CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Generates tokens for a client application.
+    /// </summary>
+    Task<TokenResponse> GenerateClientTokensAsync(
+        string clientId,
+        IEnumerable<string> scopes,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Refreshes tokens using a refresh token.
+    /// </summary>
+    Task<TokenResponse?> RefreshTokensAsync(
+        string refreshToken,
+        CancellationToken cancellationToken = default);
+}

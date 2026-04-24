@@ -40,11 +40,19 @@ public static class OpenIddictConfiguration
                     .SetTokenEndpointUris("/connect/token")
                     .SetUserInfoEndpointUris("/connect/userinfo")
                     .SetIntrospectionEndpointUris("/connect/introspect")
-                    .SetEndSessionEndpointUris("/connect/logout");
+                    .SetEndSessionEndpointUris("/connect/logout")
+                    .SetJsonWebKeySetEndpointUris("/.well-known/jwks")
+                    .SetIssuer(new Uri("http://authentication.api:5000/"));
 
                 // Enable the authorization code flow with PKCE
                 options.AllowAuthorizationCodeFlow()
                     .RequireProofKeyForCodeExchange();
+
+                // Enable the password grant flow for direct username/password authentication
+                options.AllowPasswordFlow();
+
+                // Enable the client credentials flow for service-to-service authentication
+                options.AllowClientCredentialsFlow();
 
                 // Enable the refresh token flow
                 options.AllowRefreshTokenFlow();

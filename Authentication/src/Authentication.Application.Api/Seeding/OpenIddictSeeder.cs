@@ -93,5 +93,27 @@ public static class OpenIddictSeeder
                 }
             });
         }
+
+        // Add a public client for password flow (useful for testing and simple API clients)
+        if (await applicationManager.FindByClientIdAsync("stargate-api-client") is null)
+        {
+            await applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "stargate-api-client",
+                DisplayName = "Stargate API Client",
+                ClientType = OpenIddictConstants.ClientTypes.Public,
+                Permissions =
+                {
+                    OpenIddictConstants.Permissions.Endpoints.Token,
+
+                    OpenIddictConstants.Permissions.GrantTypes.Password,
+                    OpenIddictConstants.Permissions.GrantTypes.RefreshToken,
+
+                    OpenIddictConstants.Permissions.Scopes.Email,
+                    OpenIddictConstants.Permissions.Scopes.Profile,
+                    OpenIddictConstants.Permissions.Prefixes.Scope + "stargate.api"
+                }
+            });
+        }
     }
 }

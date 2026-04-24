@@ -1,65 +1,44 @@
-﻿using Ardalis.Result;
+using Ardalis.Result;
 using Authentication.Core.Contracts;
 using Authentication.Core.Domain;
-using Common.LanguageExtensions.Utilities.ResultExtensions;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace Authentication.Core.Commands;
 
-public class LoginCommand : IRequest<Result<LoginResponse>>
+public class LoginCommand : IRequest<Result<TokenResponse>>
 {
     public string UserName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public IEnumerable<string> Scopes { get; set; } = [];
 }
 
-public class LoginResponse
-{
-    public string AccessToken { get; set; } = string.Empty;
-    public string RefreshToken { get; set; } = string.Empty;
-    public string TokenType { get; set; } = "Bearer";
-    public int ExpiresIn { get; set; }
-}
-
-public class LoginCommandHanlder(
-    ILogger<LoginCommandHanlder> logger,
+public class LoginCommandHandler(
+    ILogger<LoginCommandHandler> logger,
     SignInManager<ApplicationUser> signInManager,
-    ITokenService tokenService,
-    JwtSecurityTokenHandler tokenHandler)
-    : IRequestHandler<LoginCommand, Result<LoginResponse>>
+    ITokenService tokenService)
+    : IRequestHandler<LoginCommand, Result<TokenResponse>>
 {
-    public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<TokenResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var user = await signInManager.UserManager.FindByNameAsync(request.UserName);
-        if (user == null)
+        if (user is null)
         {
             logger.LogInformation("Login failed: User {UserName} not found.", request.UserName);
-            return Result.Unauthorized("Invalid Credentials");
+            return Result.Unauthorized();
         }
 
-        var signInResult = await signInManager.PasswordSignInAsync(user, request.Password, false, false);
+        var signInResult = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+        if (!signInResult.Succeeded)
+        {
+            logger.LogInformation("Login failed: Invalid password for user {UserName}.", request.UserName);
+            return Result.Unauthorized();
+        }
 
-        var result = signInResult.Succeeded
-            ? Result.Success()
-            : Result.Unauthorized("Invalid Credentials");
+        logger.LogInformation("User {UserName} logged in successfully.", request.UserName);
 
-        return await result
-            .Tap(() => logger.LogInformation("User {UserName} logged in successfully.", request.UserName))
-            .TapError(error => logger.LogInformation("Login failed: {Error}", error))
-            .Map<LoginResponse>(async () =>
-            {
-                var accessToken = await tokenService.GenerateAccessToken(user);
-                var refreshToken = await tokenService.GenerateRefreshToken(user);
-
-                return new LoginResponse
-                {
-                    AccessToken = tokenHandler.WriteToken(accessToken),
-                    RefreshToken = refreshToken,
-                    TokenType = "Bearer",
-                    ExpiresIn = (int)Math.Ceiling(accessToken.ValidTo.Subtract(DateTime.UtcNow).TotalSeconds)
-                };
-            });
+        var tokenResponse = await tokenService.GenerateTokensAsync(user, request.Scopes, cancellationToken);
+        return Result.Success(tokenResponse);
     }
 }

@@ -4,16 +4,18 @@ using Authentication.Core.Contracts;
 using Authentication.Infrastructure;
 using Authentication.Infrastructure.Persistence;
 using Authentication.Infrastructure.Persistence.Options;
-using Common.Infrastructure.Auth.Options;
 using Common.Infrastructure.OpenTelemetry;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
+using System.Security.Cryptography;
 
 namespace Authentication.Application.Api;
 
 public class Program
 {
+    protected Program() { }
+
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -30,9 +32,6 @@ public class Program
     {
         var dbOptions = builder.Configuration.GetSection(nameof(DatabaseOptions)).Get<DatabaseOptions>()
             ?? throw new InvalidOperationException($"{nameof(DatabaseOptions)} is missing.");
-
-        var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
-            ?? throw new InvalidOperationException($"{nameof(JwtOptions)} is missing.");
 
         builder.UseSerilog("authentication-api", logToConsole: true, logToOtel: true);
 
@@ -55,13 +54,13 @@ public class Program
             {
                 Assembly[] assemblies = [
                     typeof(Program).Assembly,
-                    typeof(LoginCommand).Assembly,
+                    typeof(RegisterCommand).Assembly,
                 ];
                 config.RegisterServicesFromAssemblies(assemblies);
-            })
-            .AddScoped<ITokenService, TokenService>()
-            .AddSingleton(jwtOptions)
-            .AddTransient<JwtSecurityTokenHandler>();
+            });
+
+        // Register token service
+        builder.Services.AddTokenService(builder.Configuration);
 
         OpenIddictConfiguration.ConfigureOpenIddict(builder, dbOptions);
     }

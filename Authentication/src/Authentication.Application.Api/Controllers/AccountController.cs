@@ -9,26 +9,21 @@ using System.Security.Claims;
 
 namespace Authentication.Application.Api.Controllers;
 
+/// <summary>
+/// Account management endpoints. For authentication (login/token), use the OpenIddict endpoints:
+/// - POST /connect/token - Get access token (password grant, refresh token, or client credentials)
+/// - POST /connect/logout - End session
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController(IMediator mediator) : ControllerBase
 {
-
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(command, cancellationToken);
 
         return result.ToActionResult(this);
-    }
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(command, cancellationToken);
-
-        IConvertToActionResult actionResult = result.ToActionResult(this);
-        return actionResult.Convert();
     }
 
     [HttpPost("logout")]
@@ -43,7 +38,8 @@ public class AccountController(IMediator mediator) : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetUserInfo(CancellationToken cancellationToken)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+            ?? User.FindFirst("sub")?.Value;
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized("User ID not found in token");
@@ -56,35 +52,18 @@ public class AccountController(IMediator mediator) : ControllerBase
         return actionResult.Convert();
     }
 
-    [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(command, cancellationToken);
-
-        IConvertToActionResult actionResult = result.ToActionResult(this);
-        return actionResult.Convert();
-    }
-
     [HttpPost("change-password")]
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordCommand command, CancellationToken cancellationToken)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized("User ID not found in token");
         }
 
         command.UserId = userId;
-        var result = await mediator.Send(command, cancellationToken);
-
-        return result.ToActionResult(this);
-    }
-
-    [HttpPost("revoke-token")]
-    [Authorize]
-    public async Task<IActionResult> RevokeAccessToken([FromBody] RevokeAccessTokenCommand command, CancellationToken cancellationToken)
-    {
         var result = await mediator.Send(command, cancellationToken);
 
         return result.ToActionResult(this);

@@ -8,6 +8,7 @@
     <PackageVersion Include="coverlet.collector" Version="8.0.1" />
 	<PackageVersion Include="CSharpFunctionalExtensions" Version="3.7.0" />
 	<PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.3.4" />
+	<PackageVersion Include="OpenIddict.Abstractions" Version="6.3.0" />
 	<PackageVersion Include="OpenIddict.AspNetCore" Version="6.3.0" />
 	<PackageVersion Include="OpenIddict.EntityFrameworkCore" Version="6.3.0" />
     <PackageVersion Include="MassTransit" Version="8.5.8" />
