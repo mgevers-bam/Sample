@@ -10,4 +10,8 @@
   	<PackageReference Include="MediatR" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Authentication\src\Authentication.Core.Boundary\Authentication.Core.Boundary.csproj" />
+  </ItemGroup>
+
 </Project>

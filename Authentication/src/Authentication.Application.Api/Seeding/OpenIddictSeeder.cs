@@ -1,11 +1,17 @@
+using Authentication.Core.Boundary;
 using OpenIddict.Abstractions;
 using OpenIddict.Core;
 using OpenIddict.EntityFrameworkCore.Models;
+using Stargate.Core.Boundary;
 
 namespace Authentication.Application.Api.Seeding;
 
 public static class OpenIddictSeeder
 {
+    private static readonly IEnumerable<ScopeRecord> AllScopes = 
+        AuthenticationScopes.Scopes
+        .Concat(StargateScopes.Scopes);
+
     public static async Task SeedAsync(
         OpenIddictScopeManager<OpenIddictEntityFrameworkCoreScope> scopeManager,
         OpenIddictApplicationManager<OpenIddictEntityFrameworkCoreApplication> applicationManager,
@@ -19,17 +25,26 @@ public static class OpenIddictSeeder
         OpenIddictScopeManager<OpenIddictEntityFrameworkCoreScope> scopeManager,
         CancellationToken cancellationToken)
     {
-        // Define scopes to seed
-        var scopesToSeed = new List<OpenIddictScopeDescriptor>
-        {
-            new() { Name = "openid", DisplayName = "OpenID", Description = "Grants access to the OpenID Connect identity token" },
-            new() { Name = "profile", DisplayName = "Profile", Description = "Grants access to profile information (name, etc.)" },
-            new() { Name = "email", DisplayName = "Email", Description = "Grants access to email address" },
-            new() { Name = "stargate.api", DisplayName = "Stargate App API", Description = "Grants access to the Stargate App API", Resources = { "stargate.api" } }
-        };
+        var scopesDescriptors = AllScopes.Select(s =>
+            {
+                var descriptor = new OpenIddictScopeDescriptor
+                {
+                    Name = s.Name,
+                    DisplayName = s.DisplayName,
+                    Description = s.Description
+                };
+                // Add resources based on scope name (this is just an example, adjust as needed)
+                foreach (var resource in s.Resources)
+                {
+                    descriptor.Resources.Add(resource);
+                }
+
+                return descriptor;
+            })
+            .ToList();
 
         // Create only the scopes that don't exist
-        foreach (var descriptor in scopesToSeed)
+        foreach (var descriptor in scopesDescriptors)
         {
             if (await scopeManager.FindByNameAsync(descriptor.Name!, cancellationToken) is null)
             {
