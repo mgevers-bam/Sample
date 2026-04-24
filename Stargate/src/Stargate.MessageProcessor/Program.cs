@@ -1,11 +1,9 @@
 using Common.Infrastructure.OpenTelemetry;
 using Common.Infrastructure.ServiceBus.MassTransit;
 using MassTransit;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Stargate.Core.Commands;
 using Stargate.Persistence.Sql;
@@ -15,6 +13,8 @@ namespace Stargate.MessageProcessor;
 
 public partial class Program
 {
+    protected Program() { }
+
     public static async Task Main(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
@@ -30,22 +30,9 @@ public partial class Program
                 });
 
         ConfigureServices(builder.Services, builder.Configuration, builder.Environment);
+        builder.Services.AddHostedService<ServiceStartup>();
 
-        var app = builder.Build();
-
-        using (var scope = app.Services.CreateScope())
-        {
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("Starting Stargate Message Processor");
-
-            if (!builder.Environment.IsEnvironment("Testing"))
-            {
-                var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<StargateDbContext>>();
-                await EnsureDatabaseCreated(dbContextFactory, logger);
-            }
-        }
-
-        await app.RunAsync();
+        await builder.Build().RunAsync();
     }
 
     private static void ConfigureServices(IServiceCollection services, ConfigurationManager configuration, IHostEnvironment environment)
@@ -65,23 +52,5 @@ public partial class Program
 
         services.AddLogging();
         services.AddHttpClient();
-    }
-
-    private static async Task EnsureDatabaseCreated(IDbContextFactory<StargateDbContext> dbContextFactory, ILogger<Program> logger)
-    {
-        try
-        {
-            using var dbContext = await dbContextFactory.CreateDbContextAsync();
-
-            await dbContext.Database.EnsureCreatedAsync();
-            await dbContext.Database.MigrateAsync();
-
-            logger.LogInformation("Database created and migrated successfully");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "An error occurred while creating or migrating the database");
-        }
-
     }
 }
