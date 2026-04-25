@@ -14,9 +14,9 @@ public static class PeristenceServiceCollectionExtensions
         return services
             .AddDbContext<AuthenticationDbContext>(dbOptions =>
             {
-                dbOptions.UseSqlServer(options.AuthConnectionString, npgOptions =>
+                dbOptions.UseNpgsql(options.AuthConnectionString, npgsqlOptions =>
                 {
-                    npgOptions
+                    npgsqlOptions
                         .MigrationsAssembly(typeof(AuthenticationDbContext).Assembly.GetName().Name)
                         .MigrationsHistoryTable("__EFMigrationsHistory");
                 });

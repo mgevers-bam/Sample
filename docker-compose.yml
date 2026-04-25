@@ -1,5 +1,19 @@
 services:
 
+  # PostgreSQL
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    user: root
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Password123!!
+      - POSTGRES_DB=auth
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
   # Sql Server
   sql-server:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -157,6 +171,7 @@ services:
       context: .
       dockerfile: Authentication/src/Authentication.Application.Api/Dockerfile
     depends_on:
+        - postgres
         - alloy
     ports:
       - "5000:5000"
@@ -243,4 +258,3 @@ volumes:
   tempo-data:
   mimir-data:
   grafana-data:
-

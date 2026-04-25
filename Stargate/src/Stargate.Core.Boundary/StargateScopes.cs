@@ -5,7 +5,7 @@ namespace Stargate.Core.Boundary;
 public static class StargateScopes
 {
     private const string StargateApi = "stargate-api";
-    private const string StargateApiResource = "stargate-api-resource";
+    private const string StargateApiResource = "stargate.api";
 
     public static readonly IReadOnlyCollection<ScopeRecord> Scopes =
     [

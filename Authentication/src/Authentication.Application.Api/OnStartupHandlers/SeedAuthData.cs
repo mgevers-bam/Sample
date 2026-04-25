@@ -24,10 +24,7 @@ public class SeedAuthDataHandler(
     {
         logger.LogDebug("Starting to seed auth data.");
 
-        if (!await dbContext.Database.CanConnectAsync(cancellationToken))
-        {
-            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
-        }
+        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
 
         await OpenIddictSeeder.SeedAsync(scopeManager, applicationManager, cancellationToken);
         await TestUserSeeder.SeedAsync(userManager);
