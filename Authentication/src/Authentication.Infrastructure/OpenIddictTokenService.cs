@@ -18,6 +18,7 @@ namespace Authentication.Infrastructure;
 /// </summary>
 public class OpenIddictTokenService(
     UserManager<ApplicationUser> userManager,
+    RoleManager<ApplicationRole> roleManager,
     IOpenIddictScopeManager scopeManager,
     IOpenIddictApplicationManager applicationManager,
     IOptionsMonitor<OpenIddictServerOptions> openIddictServerOptions,
@@ -86,6 +87,17 @@ public class OpenIddictTokenService(
 
         var roles = await userManager.GetRolesAsync(user);
         claims.AddRange(roles.Select(role => new Claim(Claims.Role, role)));
+
+        // Add claims from each role
+        foreach (var roleName in roles)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role is not null)
+            {
+                var roleClaims = await roleManager.GetClaimsAsync(role);
+                claims.AddRange(roleClaims);
+            }
+        }
 
         // Add scopes as claims
         claims.AddRange(scopes.Select(scope => new Claim("scope", scope)));

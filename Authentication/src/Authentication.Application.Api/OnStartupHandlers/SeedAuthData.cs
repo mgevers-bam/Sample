@@ -17,6 +17,7 @@ public class SeedAuthDataHandler(
     OpenIddictScopeManager<OpenIddictEntityFrameworkCoreScope> scopeManager,
     OpenIddictApplicationManager<OpenIddictEntityFrameworkCoreApplication> applicationManager,
     UserManager<ApplicationUser> userManager,
+    RoleManager<ApplicationRole> roleManager,
     ILogger<SeedAuthDataHandler> logger) 
     : IRequestHandler<SeedAuthDataRequest>
 {
@@ -27,6 +28,6 @@ public class SeedAuthDataHandler(
         await dbContext.Database.EnsureCreatedAsync(cancellationToken);
 
         await OpenIddictSeeder.SeedAsync(scopeManager, applicationManager, cancellationToken);
-        await TestUserSeeder.SeedAsync(userManager);
+        await TestUserSeeder.SeedAsync(userManager, roleManager);
     }
 }
